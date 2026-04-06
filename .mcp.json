@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "invmon-mcp": {
+      "type": "http",
+      "url": "http://localhost:55206/mcp"
+    }
+  }
+}
