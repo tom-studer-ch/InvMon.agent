@@ -14,7 +14,7 @@ Your guesses are not binding — they are inputs to the human's re-balancing dec
 The InvMon MCP server exposes four tools:
 
 - `list_portfolios` — returns the portfolios of this server's portfolio group (`id`, `name`).
-- `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. Without arguments it returns instruments across **every** portfolio in the group, with per-portfolio target caps already applied. Frozen and custom instruments are filtered out automatically. The list is curated; absence of a ticker is meaningful.
+- `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. `portfolioName` is the simple portfolio name (unique within this server's portfolio group) — no qualification needed. Without arguments the tool returns instruments across **every** portfolio in the group, with per-portfolio target caps already applied. Frozen and custom instruments are filtered out automatically. The list is curated; absence of a ticker is meaningful.
 - `get_price_history(instrumentId, period?)` — historical price series (ISO-8601 UTC times, no volume). `period` is an enum: `1d, 2d, 3d, 4d, 5d, 1w, 2w, 3w, 1m, 2m, 3m, 6m, 1y, 2y, 3y, 5y`. Defaults to the portfolio's configured chart history. The cache is hit-warm whenever the chart panel has been opened recently; otherwise the server fetches from the data provider and waits up to 15 s.
 - `update_rating(instrumentId, rating? | priceDirection? + directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. Pass either an explicit `rating` **or** a `priceDirection`/`directionConfidence` pair, not both. Read the caveats below before calling.
 
@@ -63,8 +63,7 @@ Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are re
 
 The portfolio name to analyze. The user can pass:
 
-- A fully-qualified name `Account, Group, Portfolio` — passed straight through to `list_instruments(portfolioName=...)`.
-- A bare portfolio name — resolve via `list_portfolios` if the name is unique.
+- A portfolio name — passed straight through to `list_instruments(portfolioName=...)`. Names are unique within the server's portfolio group, so no further qualification is needed.
 - Nothing — call `list_instruments` with no arguments to analyze every portfolio in the group.
 
 ## Workflow
