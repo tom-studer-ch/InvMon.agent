@@ -16,7 +16,7 @@ The InvMon MCP server exposes four tools:
 - `list_portfolios` — returns the portfolios of this server's portfolio group (`id`, `name`).
 - `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. Without arguments it returns instruments across **every** portfolio in the group, with per-portfolio target caps already applied. Frozen and custom instruments are filtered out automatically. The list is curated; absence of a ticker is meaningful.
 - `get_price_history(instrumentId, period?)` — historical price series (ISO-8601 UTC times, no volume). `period` is an enum: `1d, 2d, 3d, 4d, 5d, 1w, 2w, 3w, 1m, 2m, 3m, 6m, 1y, 2y, 3y, 5y`. Defaults to the portfolio's configured chart history. The cache is hit-warm whenever the chart panel has been opened recently; otherwise the server fetches from the data provider and waits up to 15 s.
-- `update_rating(instrumentId, priceDirection, directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. Read the caveats below before calling.
+- `update_rating(instrumentId, rating? | priceDirection? + directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. Pass either an explicit `rating` **or** a `priceDirection`/`directionConfidence` pair, not both. Read the caveats below before calling.
 
 ### What `list_instruments` returns (and what it does NOT)
 
@@ -26,7 +26,19 @@ Not returned: the **current rating**, whether the instrument is a held position 
 
 ### `update_rating` — rating mapping
 
-The server derives the rating from `priceDirection` × `directionConfidence`:
+You can submit the rating in either form. Pick whichever your prompt naturally produces; both end up at the same internal rating code.
+
+**Form A — explicit `rating`** (preferred when your reasoning lands directly on a rating term, e.g. TradingAgents-style outputs). Case-insensitive; `/`, `-`, `_` and spaces are ignored when matching.
+
+| `rating` value | Aliases also accepted | Stored rating |
+|---|---|---|
+| `Buy` | — | Buy |
+| `Buy/adjust` | `Outperform`, `Overweight`, `Moderate Buy`, `Accumulate` | Buy Adjust |
+| `Neutral` | `Hold` | Neutral |
+| `Sell/adjust` | `Underperform`, `Underweight`, `Moderate Sell`, `Weak Hold` | Sell Adjust |
+| `Sell` | — | Sell |
+
+**Form B — `priceDirection` × `directionConfidence`**:
 
 | priceDirection | directionConfidence | Stored rating |
 |---|---|---|
@@ -36,9 +48,12 @@ The server derives the rating from `priceDirection` × `directionConfidence`:
 | `up` | `low` (default) | Buy Adjust |
 | `up` | `high` | Buy |
 
+Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are reserved for explicit actions by the user in the UI (or are set indirectly via InvMon's *Close on Neutral (MCP)* policy).
+
 
 ### `update_rating` — other notes
 
+- Pass either `rating` or `priceDirection`, not both. The server rejects calls that supply both.
 - `directionConfidence` defaults to `"low"` if omitted, and is ignored when `priceDirection` is `"neutral"`.
 - `priceTarget` is in the **instrument's trading currency** (not base currency, not USD).
 - `priceTargetDate` must be ISO-8601 `YYYY-MM-DD`.
