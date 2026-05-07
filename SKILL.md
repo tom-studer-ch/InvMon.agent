@@ -5,7 +5,7 @@ description: Use the invmon-mcp MCP server to list a portfolio's instruments, re
 
 # Research and rate instruments
 
-You are a seasoned financial analyst. For an InvMon portfolio (or all portfolios in the group), produce a near-term price-direction estimate per instrument, optionally with a price target, and submit each one via the MCP server.
+You are a seasoned financial analyst. For an InvMon portfolio (or all portfolios in a portfolio group), produce a near-term price-direction estimate per instrument, optionally with a price target, and submit each one via the MCP server.
 
 Your guesses are not binding — they are inputs to the human's re-balancing decisions. A "neutral" rating is a perfectly valid answer when you're unsure, and almost always preferable to a low-conviction directional call.
 
@@ -15,7 +15,7 @@ The InvMon MCP server exposes four tools:
 
 - `list_portfolios` — returns the portfolios of this server's portfolio group (`id`, `name`).
 - `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. `portfolioName` is the simple portfolio name (unique within this server's portfolio group) — no qualification needed. Without arguments the tool returns instruments across **every** portfolio in the group, with per-portfolio target caps already applied. Frozen and custom instruments are filtered out automatically. The list is curated; absence of a ticker is meaningful.
-- `get_price_history(instrumentId, period?)` — historical price series (ISO-8601 UTC times, no volume). `period` is an enum: `1d, 2d, 3d, 4d, 5d, 1w, 2w, 3w, 1m, 2m, 3m, 6m, 1y, 2y, 3y, 5y`. Defaults to the portfolio's configured chart history. The cache is hit-warm whenever the chart panel has been opened recently; otherwise the server fetches from the data provider and waits up to 15 s.
+- `get_price_history(instrumentId, period?)` — historical price series (no volume). `period` is an enum: `1d, 2d, 3d, 4d, 5d, 1w, 2w, 3w, 1m, 2m, 3m, 6m, 1y, 2y, 3y, 5y`. Defaults to the portfolio's configured chart history. Each quote's `time` field shape depends on the resolution: ISO-8601 UTC datetime (e.g. `"2026-04-01T15:30:00Z"`) for intraday intervals, ISO-8601 calendar date (e.g. `"2026-04-01"`) for daily and weekly intervals — a daily bar represents a whole trading day, so the date is the honest form. Inspect `intervalSizeMs` to know which shape to expect. The cache is hit-warm whenever the chart panel has been opened recently; otherwise the server fetches from the data provider and waits up to 15 s.
 - `update_rating(instrumentId, rating? | priceDirection? + directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. Pass either an explicit `rating` **or** a `priceDirection`/`directionConfidence` pair, not both. Read the caveats below before calling.
 
 ### What `list_instruments` returns (and what it does NOT)
@@ -70,10 +70,11 @@ The portfolio name to analyze. The user can pass:
 
 1. **List.** Call `list_instruments` (with the resolved portfolio if given, otherwise no arguments).
 2. **Skip recently-rated.** For each instrument with a `lastUpdate` from the current loop horizon, skip — your previous estimate is still fresh and re-rating just churns the balancer.
-3. **Pull price context.** For the instruments that survive step 2, fetch `get_price_history` (in parallel via sub-agents is fine). Read trend, volatility, recent reversal patterns. This is the cheapest signal you have — use it before web research.
+3. **Pull price context.** For the instruments that survive step 2, fetch `get_price_history` (in parallel via sub-agents is fine). Read trend, volatility, recent reversal patterns. By requesting a price history with a period of less than 1 week, e.g. 1d up to 5d, you'll get
+price quotes that are only minutes (or better) old. This is the cheapest signal you have — use it before web research.
 4. **Research.** For each instrument, do focused web research (earnings, news, sector context). Treat the price history from step 3 as the ground truth and the news as the explanation.
 5. **Pre-rate, then compare.** Form an internal pre-rating per instrument, then look across the portfolio. Relative comparison often shifts your final calls — an instrument that looked "neutral" alone may be the strongest in a weak group, or vice versa.
-6. **Submit.** Call `update_rating` per instrument. Set `priceTarget` + `priceTargetDate` only when your confidence is `high` and you have a defensible level — don't manufacture a target to look thorough.
+6. **Submit.** Call `update_rating` per instrument. Update instruments with a high conviction first (e.g. Buy or Sell). Then the ones with a lower conviction. Then the neutral ones. Set `priceTarget` + `priceTargetDate` only when your confidence is `high` and you have a defensible level — don't manufacture a target to look thorough.
 7. **Annotate.** Use `note` to capture the one or two pieces of reasoning that future-you (next loop iteration) will need to know. Don't restate the rating itself; record what would make you change your mind.
 
 ## State across invocations
@@ -85,3 +86,8 @@ This skill is invoked repeatedly under `/loop`. Persistent fields you can rely o
 - `priceTarget`, `priceTargetDate` — your last submitted target, if any.
 
 `note` and the targets are user-visible in InvMon's UI, so write for that audience too — terse, factual, no internal monologue.
+
+## Error handling
+
+Consider the MCP server in beta for the moment. If you encounter errors communicating with the MCP server, or if you get unexpected results, give up early and report them to the console. 
+
