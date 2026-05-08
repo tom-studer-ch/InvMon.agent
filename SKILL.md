@@ -57,7 +57,6 @@ Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are re
 - `directionConfidence` defaults to `"low"` if omitted, and is ignored when `priceDirection` is `"neutral"`.
 - `priceTarget` is in the **instrument's trading currency** (not base currency, not USD).
 - `priceTargetDate` must be ISO-8601 `YYYY-MM-DD`.
-- Each `update_rating` call also re-runs InvMon's balancer. Don't re-rate instruments that already have a fresh `lastUpdate` from this loop iteration — see "Looped invocations" below.
 
 ## Arguments
 
@@ -69,13 +68,13 @@ The portfolio name to analyze. The user can pass:
 ## Workflow
 
 1. **List.** Call `list_instruments` (with the resolved portfolio if given, otherwise no arguments).
-2. **Skip recently-rated.** For each instrument with a `lastUpdate` from the current loop horizon, skip — your previous estimate is still fresh and re-rating just churns the balancer.
-3. **Pull price context.** For the instruments that survive step 2, fetch `get_price_history` (in parallel via sub-agents is fine). Read trend, volatility, recent reversal patterns. By requesting a price history with a period of less than 1 week, e.g. 1d up to 5d, you'll get
-price quotes that are only minutes (or better) old. This is the cheapest signal you have — use it before web research.
-4. **Research.** For each instrument, do focused web research (earnings, news, sector context). Treat the price history from step 3 as the ground truth and the news as the explanation.
-5. **Pre-rate, then compare.** Form an internal pre-rating per instrument, then look across the portfolio. Relative comparison often shifts your final calls — an instrument that looked "neutral" alone may be the strongest in a weak group, or vice versa.
-6. **Submit.** Call `update_rating` per instrument. Update instruments with a high conviction first (e.g. Buy or Sell). Then the ones with a lower conviction. Then the neutral ones. Set `priceTarget` + `priceTargetDate` only when your confidence is `high` and you have a defensible level — don't manufacture a target to look thorough.
-7. **Annotate.** Use `note` to capture the one or two pieces of reasoning that future-you (next loop iteration) will need to know. Don't restate the rating itself; record what would make you change your mind.
+2. **Pull price context.** For the instruments that survive step 2, fetch `get_price_history` (in parallel via sub-agents is fine). Read trend, volatility, recent reversal patterns. By requesting a price history with a period of less than 1 week, e.g. 1d up to 5d, you'll get
+price quotes that are only minutes (or better) old. This is the cheapest signal you have — use it before web research. If you're not able to get an up-to-date price quote for the instrument (best seconds old, maximum a few minutes), skip the instrument.
+3. **Research.** For each instrument, do focused web research (earnings, news, sector context). Treat the price history from step 3 as the ground truth and the news as the explanation.
+4. **Pre-rate, then compare.** Form an internal pre-rating per instrument, then look across the portfolio. Relative comparison often shifts your final calls — an instrument that looked "neutral" alone may be the strongest in a weak group, or vice versa.
+5. **Submit.** Call `update_rating` per instrument. Update instruments with a high conviction first (e.g. Buy or Sell). Then the ones with a lower conviction. Then the neutral ones. Set `priceTarget` + `priceTargetDate` only when your confidence is `high` and you have a defensible level — don't manufacture a target to look thorough.
+6. **Annotate.** Use `note` to capture the one or two pieces of reasoning that future-you (next loop iteration) will need to know. Don't restate the rating itself; record what would make you change your mind.
+7. Write out a summary to the console listing the instruments you rated, skipped, and include a short rationale for your rating where possible.
 
 ## State across invocations
 
