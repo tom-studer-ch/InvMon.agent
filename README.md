@@ -17,7 +17,7 @@
 Use the command
 
 ```
-/loop /invmon-agent
+/loop 1h /invmon-agent
 ```
 
 to run the skill repeatedly.
