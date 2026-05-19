@@ -18,9 +18,9 @@ Some or all of the instruments to be rated may have experienced a big recent cha
 
 ## Tools
 
-The InvMon MCP server exposes four tools:
+The InvMon MCP server exposes five tools:
 
-- `list_portfolios` — returns the portfolios of this server's portfolio group (`id`, `name`).
+- `list_portfolios()` — returns the portfolios of this server's portfolio group (`id`, `name`).
 
 - `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. `portfolioName` is the simple portfolio name (unique within this server's portfolio group) — 
 no qualification needed. Without arguments the tool returns instruments across **every** portfolio in the group.
@@ -35,12 +35,19 @@ Inspect `intervalSizeMs` to know which shape to expect.
 - `update_rating(instrumentId, rating? | priceDirection? + directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. 
 Pass either an explicit `rating` **or** a `priceDirection`/`directionConfidence` pair, not both. Read the caveats below before calling.
 
+- `update_target_weight(instrumentId, targetWeight)` — sets the instrument's target weight on a discrete S/M/L scale (three weight classes: Small, Medium, Large).
+Where needed (for increased granularity), these weights can be sub-adjusted using plus and minus sign qualifiers. This yields the following total of nine 
+discrete weights: `Small-, Small, Small+, Medium-, Medium, Medium+, Large-, Large, Large+` (short aliases `S-/S/S+/M-/M/M+/L-/L/L+` also work; matching is case-insensitive and whitespace/`_` are ignored, but `+`/`-` are significant).
+Works against both weighting models: for S/M/L Relative portfolios the value is set directly; for Percent-of-Parent portfolios it is converted to a percentage based on the portfolio's target position count. **In the percent model this collapses any prior fractional percent onto one of nine discrete values** — only call it when you actually want to overwrite the existing weight.
 
-### What `list_instruments` returns (and what it does NOT)
 
-Returned per instrument: `id, symbol, securityName, instrumentType, currency, exchange, note, lastUpdate, priceTarget, priceTargetDate`.
+### `list_instruments` — return shape (and what it does NOT include)
 
-Not returned: the **current rating**, whether the instrument is a held position vs. a screen candidate, exposure, weight, or P&L. Plan for this — you cannot read back the rating you set last time. Use `note` + `lastUpdate` to track your own state across invocations.
+Returned per instrument: `id, symbol, securityName, instrumentType, currency, exchange, targetWeight, note, lastUpdate, priceTarget, priceTargetDate`.
+
+`targetWeight` is the instrument's current target weight rendered on the discrete S/M/L scale (one of the nine values above). It is always present regardless of the parent portfolio group's weighting model — Percent-of-Parent percentages are projected onto the brick grid for display. Use this to read back the target weight you (or the user) last set.
+
+Not returned: the **current rating**, whether the instrument is a held position vs. a screen candidate, exposure, current weight, or P&L. Plan for this — you cannot read back the rating you set last time. Use `note` + `lastUpdate` to track your own state across invocations.
 
 
 ### `update_rating` — rating mapping
@@ -67,12 +74,24 @@ You can submit the rating in either form. Pick whichever your prompt naturally p
 | `up` | `low` (default) | Buy Adjust |
 | `up` | `high` | Buy |
 
-Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are reserved for explicit actions by the user in the UI.
+Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are reserved for explicit actions by the user in the UI. 
+However, if your conviction is a clear "strong", you may consider increasing the target weight (see next section).  
 
+### `update_target_weight` — target weight
 
-### `update_rating` — other notes
+The target weight of an instrument generally doesn't need to be changed so you won't use this tool often. However, two possible 
+use cases to change an instrument's target weight may include:
 
-- Pass either `rating` or `priceDirection`, not both. The server rejects calls that supply both.
+- You have a `Strong Buy` or `Strong Sell` conviction for an instrument, see a real opportunity, and want to honor this by increasing its target weight.
+- You have a high risk but high gain potential situation: Instead of setting a `neutral` rating (expressing your uncertainty), you may want to set
+a `Buy/adjust` or `Sell/adjust` rating and use this tool to decrease exposure (and potential for loss) by reducing the target weight.
+
+   
+### `update_rating` and `update_target_weight` — other notes
+
+- Pass either `rating` or `priceDirection` to `update_rating`, not both. The server rejects calls that supply both.
+
+- If you call both `update_rating` and `update_target_weight` on an instrument, always call `update_target_weight` first.
 
 - `directionConfidence` defaults to `"low"` if omitted, and is ignored when `priceDirection` is `"neutral"`.
 
@@ -82,6 +101,8 @@ Consider the priceTarget as a short- to medium-term price target at which profit
 
 - `priceTargetDate` must be ISO-8601 `YYYY-MM-DD`. This is entirely optional. Only set it if setting `priceTarget`, 
 and if there is a defensible reason to associate the price with a date. 
+
+
 
 
 ## Arguments
@@ -101,19 +122,20 @@ Read trend, volatility, recent reversal patterns. By requesting a price history 
 price quotes that are only minutes (or better) old. This is the cheapest signal you have — use it before web research. 
 If you're not able to get an up-to-date price quote for the instrument (best seconds old, maximum a few minutes), skip the instrument.
 
-3. **Research.** For each instrument, do focused web research (earnings, news, sector context, fundamentals, reason for recent change, etc.). 
+3. **Research.** Fan out sub-agents to do an in-depth analysis of each instrument. Do focused web research on earnings, news, sector context, fundamentals, reason for recent change, etc. 
 Treat the price history from the previous step as the ground truth and the news as the explanation.
 
 4. **Rate.** Rate every instrument based on your research.
 
 5. **Submit.** Call `update_rating` per instrument. Update instruments with high conviction first (e.g. Buy or Sell). 
 Then the ones with lower conviction. Then the neutral ones. Set `priceTarget` + `priceTargetDate` only when your 
-confidence is `high` and you have a defensible level — don't manufacture a target to look thorough.
+confidence is `high` and you have a defensible level — don't manufacture a target to look thorough. 
+If you choose to update the target weight of an instrument, call the `update_target_weight` tool first (i.e. before you call `update_rating` of the same instrument).
 
 6. **Annotate.** Use `note` to capture the one or two pieces of reasoning that future-you will 
 need to know. Don't restate the rating itself; record what would make you change your mind.
 
-7. Write out a summary to the console listing the instruments you rated and skipped, including a short rationale for each rating where possible.
+7. **Summarize.** Write out a summary to the console listing the instruments you rated and skipped, including a short rationale for each rating where possible.
 
 
 ## State across invocations
