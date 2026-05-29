@@ -14,6 +14,7 @@ Your guesses are not binding — they are inputs to the human's re-balancing dec
 when you're unsure, and almost always preferable to a low-conviction directional call.
 
 Some or all of the instruments to be rated may have experienced a big recent change in valuation — take this into consideration. 
+Only rate stocks (ignore ETFs and other types of non-stock instruments).
 
 
 ## Tools
@@ -32,8 +33,8 @@ The shape of each quote's `time` field depends on the resolution: ISO-8601 UTC d
 ISO-8601 calendar date (e.g. `"2026-04-01"`) for daily and weekly intervals — a daily bar represents a whole trading day, so the date is the honest form. 
 Inspect `intervalSizeMs` to know which shape to expect. 
 
-- `update_rating(instrumentId, rating? | priceDirection? + directionConfidence?, note?, priceTarget?, priceTargetDate?)` — submits your estimate. 
-Pass either an explicit `rating` **or** a `priceDirection`/`directionConfidence` pair, not both. Read the caveats below before calling.
+- `update_rating(instrumentId, rating, note?, priceTarget?, priceTargetDate?)` — submits your estimate.
+Read the caveats below before calling.
 
 - `update_target_weight(instrumentId, targetWeight)` — sets the instrument's target weight on a discrete S/M/L scale (three weight classes: Small, Medium, Large).
 Where needed (for increased granularity), these weights can be sub-adjusted using plus and minus sign qualifiers. This yields the following total of nine 
@@ -52,9 +53,7 @@ Not returned: the **current rating**, whether the instrument is a held position 
 
 ### `update_rating` — rating mapping
 
-You can submit the rating in either form. Pick whichever your prompt naturally produces; both end up at the same internal rating code.
-
-**Form A — explicit `rating`** (preferred when your reasoning lands directly on a rating term, e.g. TradingAgents-style outputs). Case-insensitive; `/`, `-`, `_` and spaces are ignored when matching.
+Submit the rating via the `rating` argument. Case-insensitive; `/`, `-`, `_` and spaces are ignored when matching.
 
 | `rating` value | Aliases also accepted | Stored rating |
 |---|---|---|
@@ -63,16 +62,6 @@ You can submit the rating in either form. Pick whichever your prompt naturally p
 | `Neutral` | `Hold` | Neutral |
 | `Sell/adjust` | `Underperform`, `Underweight`, `Moderate Sell`, `Weak Hold` | Sell Adjust |
 | `Sell` | — | Sell |
-
-**Form B — `priceDirection` × `directionConfidence`**:
-
-| priceDirection | directionConfidence | Stored rating |
-|---|---|---|
-| `down` | `high` | Sell |
-| `down` | `low` (default) | Sell Adjust |
-| `neutral` | (ignored) | Neutral |
-| `up` | `low` (default) | Buy Adjust |
-| `up` | `high` | Buy |
 
 Note that `Strong Buy` / `Strong Sell` cannot be submitted directly. They are reserved for explicit actions by the user in the UI. 
 However, if your conviction is a clear "strong", you may consider increasing the target weight (see next section).  
@@ -89,11 +78,7 @@ a `Buy/adjust` or `Sell/adjust` rating and use this tool to decrease exposure (a
    
 ### `update_rating` and `update_target_weight` — other notes
 
-- Pass either `rating` or `priceDirection` to `update_rating`, not both. The server rejects calls that supply both.
-
 - If you call both `update_rating` and `update_target_weight` on an instrument, always call `update_target_weight` first.
-
-- `directionConfidence` defaults to `"low"` if omitted, and is ignored when `priceDirection` is `"neutral"`.
 
 - `priceTarget` is in the **instrument's trading currency** (which is the quote/chart currency; not strictly base currency, not strictly USD). 
 Consider the priceTarget as a short- to medium-term price target at which profit-taking might be considered 
