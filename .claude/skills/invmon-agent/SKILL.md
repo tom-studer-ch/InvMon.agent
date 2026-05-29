@@ -42,7 +42,7 @@ Instruments are ordered positions-first then candidates (or randomized if the po
 
 `targetWeight` is the discrete S/M/L label, always present regardless of weighting model — Percent-of-Parent percentages are projected onto the nine-step grid for display.
 
-`rating` is the InvMon-internal rating that drives target weight and rebalancing. For ratings you submitted, it normally matches your last submission with two exceptions: `Strong Buy`/`Strong Sell` show up here as `Buy`/`Sell` (Strong is downgraded — see below), and the rating resets to `Neutral` whenever a position transitions to flat. Treat this as a useful but imperfect read-back of your prior call.
+`rating` is a read-back of your prior submission, with two caveats: `Strong Buy`/`Strong Sell` may show up here as `Buy`/`Sell`, and the rating resets to `Neutral` whenever a position transitions to flat.
 
 `lastTradePrice` is the most recent trade price (in the instrument's trading currency).
 
@@ -63,20 +63,13 @@ Submit the rating via the `rating` argument. Case-insensitive; `/`, `-`, `_` and
 | `Sell` | — | Sell |
 | `Strong Sell` | — | Strong Sell |
 
-**What happens on the InvMon side.** Your submitted rating is recorded verbatim as the instrument's *analyst rating*. From that, an *internal rating* is derived which drives target weight and rebalancing. The two are normally identical with one exception: `Strong Buy` and `Strong Sell` are downgraded to `Buy` / `Sell` internally. The Strong tier in InvMon overrides the portfolio's target position count — we don't want MCP-driven ratings to do that by default, so the override is suppressed. Your Strong opinion is still preserved on the analyst rating and stays visible.
 
-**Position close behavior.** When you set a rating on an instrument that is currently a position:
-- A *contrary-direction* rating (sell-side on a long, buy-side on a short — including the `adjust` tier and Strong) automatically requests a close of the position. This is unconditional and does not depend on any setting.
-- A `Neutral` rating closes the position only when the portfolio's *Close on Neutral* setting is enabled. That setting is opt-in per portfolio.
-- A *same-direction* rating leaves the position open.
-
-You can use this to drive exits — submit `Sell` (or `Sell/adjust`) on a long position you want closed, and InvMon will queue the close order.
 
 ### `update_target_weight` — target weight
 
 You won't use this tool often — target weight is mostly a human-controlled knob. Two scenarios where it makes sense:
 
-- You have a `Strong Buy` or `Strong Sell` conviction and want to honor it by increasing the target weight (the Strong rating itself no longer enlarges the portfolio from the MCP path).
+- You have a `Strong Buy` or `Strong Sell` conviction and want to back it with a larger target weight.
 - You see high-risk / high-reward upside and want to reduce exposure rather than express the uncertainty as `Neutral` — submit `Buy/adjust` (or `Sell/adjust`) and shrink the target weight.
 
 
@@ -123,7 +116,7 @@ need to know. Don't restate the rating itself; record what would make you change
 
 This skill may be invoked repeatedly. Persistent fields you can read back via `list_instruments`:
 
-- `rating`, `targetWeight` — last InvMon-internal values (see the `list_instruments` caveats above).
+- `rating`, `targetWeight` — last values (see the `list_instruments` caveats above).
 - `note` — your free-form reasoning. Best place to record "what would change my mind".
 - `lastUpdate` — when the rating was last set (epoch millis).
 - `priceTarget`, `priceTargetDate` — your last submitted target, if any.
