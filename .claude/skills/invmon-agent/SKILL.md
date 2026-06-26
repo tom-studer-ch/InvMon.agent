@@ -19,8 +19,9 @@ The InvMon MCP server exposes four tools:
 
 - `list_portfolios()` — returns the portfolios of this server's portfolio group (`id`, `name`).
 
-- `list_instruments(portfolioId?, portfolioName?)` — returns instruments for analysis. `portfolioName` is the simple portfolio name (unique within this server's portfolio group) — 
-no qualification needed. Without arguments the tool returns instruments across **every** portfolio in the group.
+- `list_instruments(...)` — returns instruments for analysis.   
+  - Arguments: `portfolioId?`, `portfolioName?`. Without arguments the tool returns instruments across **every** portfolio in the group; with one, only that portfolio.
+  - `portfolioName` is the simple portfolio name (unique within this server's portfolio group).
 
 - `get_price_history(instrumentId, period?)` — historical price series. Each point is `{time, price}` and includes `volume` when the data provider reports it; 
 the field is omitted for FX, crypto, and any bar where the source value is missing or zero — so treat its absence as "unknown", not "zero". 
@@ -29,32 +30,33 @@ The shape of each quote's `time` field depends on the resolution: ISO-8601 UTC d
 ISO-8601 calendar date (e.g. `"2026-04-01"`) for daily and weekly intervals — a daily bar represents a whole trading day, so the date is the honest form. 
 Inspect `intervalSizeMs` to know which shape to expect. 
 
-- `update_ratings(updates)` — the one tool for submitting ratings. `updates` is a non-empty array; each entry has `instrumentId` and `rating` (required), plus optional `note`, `priceTarget`, `priceTargetDate`. Submit **every** rating you're changing in a single call. Entries are processed in order; an invalid entry is reported in place (`{error}`) and the rest still apply. Returns one result per entry, in input order: `{success, instrumentId, symbol, rating}` or `{error}`. Read the caveats below before calling.
+- `update_ratings(updates)` — the one tool for submitting ratings. `updates` is a non-empty array; each entry has `instrumentId` and `rating` (required), plus optional `note`, `priceTarget`, `priceTargetDate`. Submit **every** rating you're changing in a single call. Entries are processed in order; an invalid entry is reported in place (`{error}`) and the rest still apply. Returns one result per entry, in input order: `{success, instrumentId, symbol, rating}` or `{error}`.
 
 ### `list_instruments` — return shape
 
-Returned per instrument: `id, symbol, securityName, instrumentType, currency, exchange, rating, note, lastUpdate, priceTarget, priceTargetDate, lastTradePrice`.
+Returned per instrument: `id, symbol, securityName, instrumentType, currency, exchange, targetWeight, note, lastUpdate, priceTarget, priceTargetDate, rating, lastTradePrice`.
 
-`rating` is a read-back of your prior submission.
+`rating` is a read-back: if you've rated the instrument before, it's the InvMon rating code you submitted (e.g. `rating.g`); otherwise it's the human label of the instrument's current InvMon-internal rating (e.g. `Buy`, `Strong Sell`). Treat any value that starts with `rating.` as the raw code from your prior submission.
+
+`targetWeight` is the discrete target weight bucket the instrument currently sits in: one of `Small-`, `Small`, `Small+`, `Medium-`, `Medium`, `Medium+`, `Large-`, `Large`, `Large+`, or `null` if no bucket applies. 
 
 `lastTradePrice` is the most recent trade price (in the instrument's trading currency).
 
-Not returned: whether the instrument is a held position vs. a screen candidate, exposure, current weight, or P&L. Use `note` + `lastUpdate` to track anything else across invocations.
 
 
 ### `update_ratings` — rating values
 
 Submit the rating via the `rating` argument. Case-insensitive; `/`, `-`, `_` and spaces are ignored when matching.
 
-| `rating` value | Aliases also accepted | 
-|---|---|---|
-| `Strong Buy` | — | 
-| `Buy` | — | 
-| `Buy/adjust` | `Outperform`, `Overweight`, `Moderate Buy`, `Accumulate` | 
-| `Neutral` | `Hold` | 
-| `Sell/adjust` | `Underperform`, `Underweight`, `Moderate Sell`, `Weak Hold` | 
-| `Sell` | — | 
-| `Strong Sell` | — | 
+| `rating` value | Aliases also accepted |
+|---|---|
+| `Strong Buy` | — |
+| `Buy` | — |
+| `Buy/adjust` | `Outperform`, `Overweight`, `Moderate Buy`, `Accumulate` |
+| `Neutral` | `Hold` |
+| `Sell/adjust` | `Underperform`, `Underweight`, `Moderate Sell`, `Weak Hold` |
+| `Sell` | — |
+| `Strong Sell` | — |
 
 
 
@@ -87,7 +89,7 @@ Treat the price history from the previous step as the ground truth and the news 
 
 4. **Rate.** Rate every instrument based on your research.
 
-5. **Submit.** Send all your ratings in a single `update_ratings` call so the portfolio rebalances once, with every rating in view. Set `priceTarget` + `priceTargetDate` per entry only when you have high conviction *and* a defensible level — don't manufacture a target to look thorough.
+5. **Submit.** Send all your ratings in a single `update_ratings` call. Set `priceTarget` + `priceTargetDate` per entry only when you have high conviction *and* a defensible level — don't manufacture a target to look thorough.
 
 6. **Annotate.** Use `note` to capture the one or two pieces of reasoning that future-you will 
 need to know. Don't restate the rating itself; record what would make you change your mind.
@@ -99,7 +101,7 @@ need to know. Don't restate the rating itself; record what would make you change
 
 This skill may be invoked repeatedly. Persistent fields you can read back via `list_instruments`:
 
-- `rating` — your last rating.
+- `rating` — your last rating (as the raw `rating.*` code) when you've rated this instrument before; otherwise the human label of the InvMon-internal rating.
 - `note` — your free-form reasoning. Best place to record "what would change my mind".
 - `lastUpdate` — when the rating was last set (epoch millis).
 - `priceTarget`, `priceTargetDate` — your last submitted target, if any.
