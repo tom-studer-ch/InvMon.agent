@@ -36,7 +36,7 @@ Inspect `intervalSizeMs` to know which shape to expect.
 
 Returned per instrument: `id, symbol, securityName, instrumentType, currency, exchange, targetWeight, note, lastUpdate, priceTarget, priceTargetDate, rating, lastTradePrice`.
 
-`rating` is a read-back: if you've rated the instrument before, it's the InvMon rating code you submitted (e.g. `rating.g`); otherwise it's the human label of the instrument's current InvMon-internal rating (e.g. `Buy`, `Strong Sell`). Treat any value that starts with `rating.` as the raw code from your prior submission.
+`rating` is a read-back of your last submitted rating as a human label (e.g. `Strong Buy`, `Buy Adjust`, `Neutral`, `Sell Adjust`, `Strong Sell`), or `null` if you haven't rated this instrument yet.
 
 `targetWeight` is the discrete target weight bucket the instrument currently sits in: one of `Small-`, `Small`, `Small+`, `Medium-`, `Medium`, `Medium+`, `Large-`, `Large`, `Large+`, or `null` if no bucket applies. 
 
@@ -101,7 +101,7 @@ need to know. Don't restate the rating itself; record what would make you change
 
 This skill may be invoked repeatedly. Persistent fields you can read back via `list_instruments`:
 
-- `rating` — your last rating (as the raw `rating.*` code) when you've rated this instrument before; otherwise the human label of the InvMon-internal rating.
+- `rating` — your last rating (as a human label), or `null` if you haven't rated this instrument yet.
 - `note` — your free-form reasoning. Best place to record "what would change my mind".
 - `lastUpdate` — when the rating was last set (epoch millis).
 - `priceTarget`, `priceTargetDate` — your last submitted target, if any.
