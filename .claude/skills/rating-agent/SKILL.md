@@ -1,5 +1,5 @@
 ---
-name: invmon-agent
+name: rating-agent
 description: Use the invmon-mcp MCP server to list a set of instruments, research each one, and submit a rating (optionally with a price target) back to InvMon to inform re-balancing. (In-house; not public.)
 ---
 
@@ -15,9 +15,9 @@ Some or all instruments may have experienced a big recent change in price or vol
 
 ## Tools
 
-The InvMon MCP server exposes four tools:
+The InvMon MCP server exposes five tools:
 
-- `list_portfolios()` — returns the portfolios of this server's portfolio group (`id`, `name`).
+- `list_portfolios()` — returns the portfolios of this server's portfolio group: `{id, name, sentiment}` per portfolio. `sentiment` is the portfolio's current sentiment (set manually by the user or, on the AT tier, via `set_sentiment`) as a human label (`Very Bearish` / `Bearish` / `Neutral` / `Bullish` / `Very Bullish`), or `null` if never set; a new portfolio starts at `Neutral`.
 
 - `list_instruments(...)` — returns instruments for analysis.   
   - Arguments: `portfolioId?`, `portfolioName?`. Without arguments the tool returns instruments across **every** portfolio in the group; with one, only that portfolio.
@@ -31,6 +31,8 @@ ISO-8601 calendar date (e.g. `"2026-04-01"`) for daily and weekly intervals — 
 Inspect `intervalSizeMs` to know which shape to expect. 
 
 - `update_ratings(updates)` — the one tool for submitting ratings. `updates` is a non-empty array; each entry has `instrumentId` and `rating` (required), plus optional `note`, `priceTarget`, `priceTargetDate`. Submit **every** rating you're changing in a single call. Entries are processed in order; an invalid entry is reported in place (`{error}`) and the rest still apply. Returns one result per entry, in input order: `{success, instrumentId, symbol, rating}` or `{error}`.
+
+- `set_sentiment(sentiment, portfolioId?, portfolioName?)` — record your read of the broader market a portfolio trades against (e.g. NASDAQ for a US-tech portfolio). With `portfolioId` or `portfolioName` the sentiment is applied to that one portfolio; without either, to every portfolio in this server's group. `sentiment` is case-insensitive (`/`, `-`, `_` and spaces ignored); accepted values, ordered most bearish → most bullish: `Very Bearish`, `Bearish`, `Neutral`, `Bullish`, `Very Bullish`. Returns one result per portfolio updated, in input order: `{success, portfolioId, portfolioName, sentiment}` or `{error, portfolioId?, portfolioName?}`. A missing or unrecognized `sentiment` returns a single `{error}` object instead.
 
 ### `list_instruments` — return shape
 
