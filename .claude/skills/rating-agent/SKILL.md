@@ -23,12 +23,13 @@ The InvMon MCP server exposes five tools:
   - Arguments: `portfolioId?`, `portfolioName?`. Without arguments the tool returns instruments across **every** portfolio in the group; with one, only that portfolio.
   - `portfolioName` is the simple portfolio name (unique within this server's portfolio group).
 
-- `get_price_history(instrumentId, period?)` — historical price series. Each point is `{time, price}` and includes `volume` when the data provider reports it; 
+- `get_price_history(instrumentId, period?)` — historical price series. Each point is `{time, price, intervalEndMs}` plus optional `isPartial` and `volume`. `volume` is included when the data provider reports it; 
 the field is omitted for FX, crypto, and any bar where the source value is missing or zero — so treat its absence as "unknown", not "zero". 
 `period` is an enum: `1d, 2d, 3d, 4d, 5d, 1w, 2w, 3w, 1m, 2m, 3m, 6m, 1y, 2y, 3y, 5y`. Defaults to the portfolio's configured chart history. 
 The shape of each quote's `time` field depends on the resolution: ISO-8601 UTC datetime (e.g. `"2026-04-01T15:30:00Z"`) for intraday intervals, 
 ISO-8601 calendar date (e.g. `"2026-04-01"`) for daily and weekly intervals — a daily bar represents a whole trading day, so the date is the honest form. 
-Inspect `intervalSizeMs` to know which shape to expect. 
+Inspect `intervalSizeMs` to know which shape to expect. `intervalEndMs` is the bar's exclusive end (epoch millis = bar start + `intervalSizeMs`), useful for spans when `time` is a bare date. 
+**`isPartial: true` marks the trailing bar as still forming** — its interval hasn't closed, so its `price`/`volume` are running aggregates that keep changing; weight the last bar accordingly (don't read a partial-bar move as a settled close). It is omitted for completed bars. 
 
 - `update_ratings(updates)` — the one tool for submitting ratings. `updates` is a non-empty array; each entry has `instrumentId` and `rating` (required), plus optional `note`, `priceTarget`, `priceTargetDate`. Submit **every** rating you're changing in a single call. Entries are processed in order; an invalid entry is reported in place (`{error}`) and the rest still apply. Returns one result per entry, in input order: `{success, instrumentId, symbol, rating}` or `{error}`.
 
