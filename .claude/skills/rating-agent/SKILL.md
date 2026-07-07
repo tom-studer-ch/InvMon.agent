@@ -113,5 +113,7 @@ This skill may be invoked repeatedly. Persistent fields you can read back via `l
 
 If you have been invoked as part of a /loop (Cron), you can stop the loop once the US trading day ends.
 
+## Running this skill in a loop
 
+This skill uses the InvMon MCP server, accessed via localhost. This skill can only run in a local session, so always run this skill in the current session only (remote execution not supported).
 

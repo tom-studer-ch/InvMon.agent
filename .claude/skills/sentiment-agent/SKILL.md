@@ -20,3 +20,9 @@ the current VIX level, the CNN Fear & Greed Index, and breaking headlines from t
 - **Treat slow/lagging signals as background only:** weekly surveys (e.g. AAII), monthly/full-year 
 forecasts and price targets barely move between runs — use them as a baseline, but never let a 
 stale read override fresh real-time signals.
+
+
+**Running this skill in a loop**
+
+This skill uses the InvMon MCP server, accessed via localhost. This skill can only run in a local 
+session, so always run this skill in the current session only (remote execution not supported).
