@@ -17,7 +17,7 @@ Some or all instruments may have experienced a big recent change in price or vol
 
 The InvMon MCP server exposes five tools:
 
-- `list_portfolios()` — returns the portfolios of this server's portfolio group: `{id, name, sentiment}` per portfolio. `sentiment` is the portfolio's current sentiment (set manually by the user or, on the AT tier, via `set_sentiment`) as a human label (`Very Bearish` / `Bearish` / `Neutral` / `Bullish` / `Very Bullish`), or `null` if never set; a new portfolio starts at `Neutral`.
+- `list_portfolios()` — returns the portfolios of this server's portfolio group: `{id, name, sentiment}` per portfolio. `sentiment` is the portfolio's current sentiment (set manually by the user or via `set_sentiment`) as a human label (`Very Bearish` / `Bearish` / `Neutral` / `Bullish` / `Very Bullish`), or `null` if never set; a new portfolio starts at `Neutral`.
 
 - `list_instruments(...)` — returns instruments for analysis.   
   - Arguments: `portfolioId?`, `portfolioName?`. Without arguments the tool returns instruments across **every** portfolio in the group; with one, only that portfolio.
