@@ -11,7 +11,7 @@ is to catch sentiment *changes* as they happen through the trading day. Research
 sentiment, classify it on the 5-point scale, report it via `set_sentiment`, then print a quick 
 console summary.
 
-Currently hard-coded for the NASDAQ (matching the current InvMon portfolio configuration).
+Currently hard-coded for the NASDAQ (needs to be adjusted for other portfolios).
 
 Because the loop exists to catch intra-day shifts, weight signals by how fast they move:
 
