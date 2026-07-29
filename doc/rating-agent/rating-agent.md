@@ -1,10 +1,19 @@
-# Rating Agent — Set-Up Tutorial
+# Autonomous Trading Agent — Set-Up Tutorial
 
-The `rating-agent` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. This tutorial walks through the InvMon configuration used to run it: a simulated long/short portfolio group whose candidates are supplied by IB market scanners.
+This tutorial explains a possible scenario for using the rating-agent skill.
+
+> The InvMon configuration explained here requires an InvMon AT key (AT = autonomous trading). **This is not a generally available feature**. 
+
+The `rating-agent` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
+
+When run in a loop, together with a suitable InvMon configuration, this skill can drive autonomous trading scenarios - live or in simulation mode. The setup below explains the necessary configuration for an autonomous, simulated day-trading scenario.
+
+> This setup provides one possible scenario. The scenario outlined below had been test-run over a two-week period with excellent performance during a time where mostly sell ratings surfaced. **Caveat: Sell ratings result in short-sales which, due to margin requirements, may be difficult to execute in real-life scenarios and come with potentially unlimited risk**. 
+
 
 ## Prerequisites
 
-- InvMon running with a paid plan (the MCP server and intra-day chart data require it; Arm Ratings and the autonomous trading switches require an AT subscription).
+- InvMon running with an InvMon AT key (personally provided - not a generally available feature).
 - Interactive Brokers TWS running and connected to your IB account.
 - Claude Code with this repository (`InvMon.agent`) as the working directory. The bundled `.mcp.json` expects the MCP server on port `55206` — keep the port below in sync, or adjust `.mcp.json`.
 
@@ -16,11 +25,11 @@ Create a new portfolio group for the agent to work in.
 
 Options worth noting:
 
-- **Simulation** — all trades in this group are simulated. Recommended for a first run.
+- **Simulation** — all trades in this group are simulated. 
 - **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match `.mcp.json`).
 - **Instruments List Mode: Combined** — the agent's `list_instruments` call returns positions and candidates together.
 - **Arm Ratings** — allows the agent's submitted ratings to actually drive target weights and close policies.
-- **Auto Delta Order Submission** is on, but **Auto IB Order Transfer** is *off* — orders are created and sent to the TWS, but not transferred to IB for execution. Combined with the Simulation flag, no real-money trades can result.
+- **Auto Delta Order Submission** is on. When on for a simulated portfolio group, delta orders are auto-executed (simulated at the current bid/ask price, honoring slippage as configured below).
 
 ## 2. Add the portfolios
 
@@ -40,21 +49,22 @@ Open the portfolio group's *Settings…* dialog (context menu on the group in th
 
 ![Instrument Chart Range](assets/040-edit-portfolio-group-settings.png)
 
-**5 days (15 min resolution)** gives the agent intra-day price bars: `get_price_history` defaults to this range, and short periods return quotes that are only minutes old — the freshness the skill requires before rating an instrument. Intra-day resolutions need a paid InvMon plan or a suitable IB market data subscription.
+**5 days (15 min resolution)** gives the agent intra-day price bars: `get_price_history` defaults to this range, and short periods return quotes that are only minutes old — the freshness the skill requires before rating an instrument. 
 
 ### Rebalancing settings
 
 ![Rebalancing Settings](assets/050-rebalancing-settings.png)
 
-**Enable Short Orders** is required for the `Short` portfolio to work. **Move to Watchlist** keeps closed instruments visible instead of dropping them.
+**Enable Short Orders** is required for the `Short` portfolio to work. **Move to Watchlist** will move closed instruments to the watchlist (instead of the candidates list). As a consequence, a once-closed position of an instrument will not be re-opened.
 
-<!-- Editorial note: screenshot numbering jumps from 050 to 070 — is a screenshot missing here (060), or was it removed intentionally? Also: "Enable Rebalancing Orders" is off in this setup while "Auto Delta Order Submission" is on in the group targets; a sentence explaining why threshold-based rebalancing orders stay disabled for this agent setup would help readers. -->
+**Enable Rebalancing Orders** is off - we only buy and sell full positions; we don't rebalance/adjust open positions. **Trade on Adjust Ratings** is off. Buy/adjust is too weak a signal (or so we assume). **Force Trade on Strong Ratings** must be off. If it were on, InvMon would trade any Strong Buy or Strong Sell rating, even if all portfolio target slots are already filled. 
+
 
 ### Order type, size & limit calculation
 
 ![Order Type, Size & Limit Calculation](assets/070-order-type.png)
 
-Defaults are fine here: adaptive orders, a 0.5% slippage cap, and trading restricted to regular trading hours.
+Defaults are fine here: adaptive orders, a 0.5% slippage cap, and trading restricted to regular trading hours. Slippage is relevant for simulation mode (will be used to calculate the estimated trade price - adjust the slippage to make the simulation more or less conservative in terms of achieved execution prices). The order type is not relevant for simulations.
 
 ### Close policies
 
@@ -66,15 +76,17 @@ These policies close positions automatically and require an active TWS connectio
 
 ![Autonomous Trading Gates](assets/090-autonomous-trading-gates.png)
 
-Sanity limits every automatically created order must pass (fresh quote, tight spread, limited price deviation and exposure overshoot). **Hard Gates** rejects failing orders outright instead of holding them. The autonomous-trading on/off switches themselves live in the group's *Targets & Rebalancing* dialog (step 1).
+Sanity limits every automatically created order must pass (fresh quote, tight spread, limited price deviation and exposure overshoot). **Hard Gates** is an important option for simulations - with the option on, if a gate fails, no delta order is created and no execution results. The autonomous-trading on/off switches themselves live in the group's *Targets & Rebalancing* dialog (step 1).
+
+> Failing gates are recorded on their respective instrument. Instruments with continuously failing gates are basically untradable (in a timely fashion) under current market conditions. Consecutive runs of the market scanner will recycle those first.
 
 ### MCP server options
 
 ![MCP Server Options](assets/100-mcp-options.png)
 
-- **List Limit 10** — caps how many instruments `list_instruments` returns per call, keeping the agent's research fan-out bounded.
+- **List Limit 10** — caps how many instruments `list_instruments` returns per call, keeping the agent's research fan-out bounded. In **Combined** mode (see above), `list_instruments` will return all of the portfolio's positions plus up to this number of candidates.
 - **Find Instruments Using Scanner** — a `list_instruments` call triggers the portfolios' saved market scanners first, so the agent always rates a fresh candidate set (see next step).
-- **Random List Order** — shuffles the returned list.
+- **Random List Order** — shuffles the returned list, a minor feature, potentially lowering rating bias.
 
 ## 4. Configure the market scanners
 
