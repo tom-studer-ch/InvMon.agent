@@ -1,7 +1,8 @@
 ---
-name: rating-agent description: Use the invmon-mcp MCP server to list a set of
-instruments, research each one, and submit a rating (optionally with a price
-target) back to InvMon to inform re-balancing. (In-house; not public.)
+name: rating-agent
+description: Use the invmon-mcp MCP server to list a set of instruments, research 
+each one, and submit a rating (optionally with a price target) back to InvMon to 
+inform re-balancing. (In-house; not public.)
 ---
 
 
@@ -21,13 +22,10 @@ volume — take possible near-term effects of this into consideration.
 
 ## Tools
 
-The InvMon MCP server exposes five tools:
+The InvMon MCP server exposes these four tools that are relevant for this skill: 
 
 - `list_portfolios()` — returns the portfolios of this server's portfolio group:
-  `{id, name, sentiment}` per portfolio. `sentiment` is the portfolio's current
-  sentiment (set manually by the user or via `set_sentiment`) as a human label
-  (`Very Bearish` / `Bearish` / `Neutral` / `Bullish` / `Very Bullish`), or
-  `null` if never set; a new portfolio starts at `Neutral`.
+  `{id, name}` per portfolio.
 
 - `list_instruments(...)` — returns instruments for analysis.   
   - Arguments: `portfolioId?`, `portfolioName?`. Without arguments the tool
@@ -35,6 +33,8 @@ The InvMon MCP server exposes five tools:
     that portfolio.
   - `portfolioName` is the simple portfolio name (unique within this server's
     portfolio group).
+  - This skill doesn't use the `pool` argument. Without it, `list_instruments(...)`
+    returns all positions/candidates that are to be rated.
 
 - `get_price_history(instrumentId, period?)` — historical price series. Each
   point is `{time, price, intervalEndMs}` plus optional `isPartial` and
@@ -63,22 +63,12 @@ The InvMon MCP server exposes five tools:
   result per entry, in input order: `{success, instrumentId, symbol, rating}`
   or `{error}`.
 
-- `set_sentiment(sentiment, portfolioId?, portfolioName?)` — record your read of
-  the broader market a portfolio trades against (e.g. NASDAQ for a US-tech
-  portfolio). With `portfolioId` or `portfolioName` the sentiment is applied to
-  that one portfolio; without either, to every portfolio in this server's
-  group. `sentiment` is case-insensitive (`/`, `-`, `_` and spaces ignored);
-  accepted values, ordered most bearish → most bullish: `Very Bearish`,
-  `Bearish`, `Neutral`, `Bullish`, `Very Bullish`. Returns one result per
-  portfolio updated, in input order: `{success, portfolioId, portfolioName,
-  sentiment}` or `{error, portfolioId?, portfolioName?}`. A missing or
-  unrecognized `sentiment` returns a single `{error}` object instead.
 
 ### `list_instruments` — return shape
 
 Returned per instrument: `id, symbol, securityName, instrumentType, currency,
 exchange, targetWeight, note, lastUpdate, priceTarget, priceTargetDate, rating,
-lastTradePrice`.
+lastTradePrice, lastTradeTimestamp`.
 
 `rating` is a read-back of your last submitted rating as a human label
 (e.g. `Strong Buy`, `Buy Adjust`, `Neutral`, `Sell Adjust`, `Strong Sell`), or
@@ -89,7 +79,9 @@ sits in: one of `Small-`, `Small`, `Small+`, `Medium-`, `Medium`, `Medium+`,
 `Large-`, `Large`, `Large+`, or `null` if no bucket applies. 
 
 `lastTradePrice` is the most recent trade price (in the instrument's trading
-currency).
+currency). `lastTradeTimestamp` is the epoch-millis time of that last price
+update (`null` if no price has been received yet) — the cheapest way to check
+quote freshness before doing anything else with an instrument.
 
 
 
@@ -98,11 +90,15 @@ currency).
 Submit the rating via the `rating` argument. Case-insensitive; `/`, `-`, `_` and
 spaces are ignored when matching.
 
-| `rating` value | Aliases also accepted | |---|---| | `Strong Buy` | — | |
-`Buy` | — | | `Buy/adjust` | `Outperform`, `Overweight`, `Moderate Buy`,
-`Accumulate` | | `Neutral` | `Hold` | | `Sell/adjust` | `Underperform`,
-`Underweight`, `Moderate Sell`, `Weak Hold` | | `Sell` | — | | `Strong Sell`
-| — |
+| `rating` value | Aliases also accepted |
+|---|---|
+| `Strong Buy` | — |
+| `Buy` | — |
+| `Buy/adjust` | `Outperform`, `Overweight`, `Moderate Buy`, `Accumulate` |
+| `Neutral` | `Hold` |
+| `Sell/adjust` | `Underperform`, `Underweight`, `Moderate Sell`, `Weak Hold` |
+| `Sell` | — |
+| `Strong Sell` | — |
 
 
 
@@ -121,9 +117,9 @@ spaces are ignored when matching.
 
 The portfolio name to analyze. The user can pass:
 
-- A portfolio name — passed straight through to `list_instruments
-  (portfolioName=...)`. Names are unique within the server's portfolio group,
-  so no further qualification is needed.
+- A portfolio name — passed straight through to
+  `list_instruments(portfolioName=...)`. Names are unique within the server's
+  portfolio group, so no further qualification is needed.
 - Nothing — call `list_instruments` with no arguments to analyze all available
   instruments across the portfolio group. This is currently the preferred mode
   of operation.
@@ -140,6 +136,9 @@ period of less than 1 week, e.g. 1d up to 5d, you'll get price quotes that are
 only minutes (or better) old. This is the cheapest signal you have — use it
 before web research. If you're not able to get an up-to-date price quote for
 the instrument (best seconds old, maximum a few minutes), skip the instrument.
+`lastTradeTimestamp` from `list_instruments` is the quickest freshness check;
+and if a sub-week `period` returns `intervalSizeMs` >= 86400000, the data was
+downgraded to EOD bars and does not satisfy the freshness requirement.
 
 3. **Research.** Fan out sub-agents to do an in-depth analysis of each
 instrument. Do focused web research on earnings, news, sector context,
@@ -176,10 +175,10 @@ This skill may be invoked repeatedly. Persistent fields you can read back via
 `note` and the targets are user-visible in InvMon's UI, so write for that
 audience too — terse, factual, no internal monologue.
 
+## Running this skill in a loop
+
 If you have been invoked as part of a /loop (Cron), you can stop the loop once
 the US trading day ends.
-
-## Running this skill in a loop
 
 This skill uses the InvMon MCP server, accessed via localhost. This skill can
 only run in a local session, so always run this skill in the current session
