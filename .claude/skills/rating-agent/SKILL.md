@@ -46,7 +46,8 @@ The InvMon MCP server exposes these four tools that are relevant for this skill:
   field depends on the resolution: ISO-8601 UTC datetime
   (e.g. `"2026-04-01T15:30:00Z"`) for intraday intervals, ISO-8601 calendar
   date (e.g. `"2026-04-01"`) for daily and weekly intervals — a daily bar
-  represents a whole trading day, so the date is the honest form. Inspect
+  represents a whole trading day, and a weekly bar is stamped at its week's
+  Monday (UTC), so the date is the honest form. Inspect
   `intervalSizeMs` to know which shape to expect. `intervalEndMs` is the bar's
   exclusive end (epoch millis = bar start + `intervalSizeMs`), useful for spans
   when `time` is a bare date. 
