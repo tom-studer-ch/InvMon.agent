@@ -1,9 +1,9 @@
 ---
-name: scanner-agent description: Use the invmon-mcp MCP server to sweep a large
-securities universe in price-banded batches through InvMon's IB market scanner,
-rating each batch and setting aside the buy-or-better names, until N of them
-have been identified — then expose the winners in the watchlist. (In-house; not
-public. AT tier.)
+name: scanner-agent
+description: Use the invmon-mcp MCP server to sweep a large securities universe in price-banded 
+batches through InvMon's IB market scanner, rating each batch and setting aside the buy-or-better 
+names, until N of them have been identified — then expose the winners in the watchlist. (In-house; 
+not public. Requires market-scanner access.)
 ---
 
 
@@ -33,7 +33,8 @@ This skill drives a **dedicated portfolio group** set up as follows. If a
 `run_scanner` call errors, re-read this list — the errors point straight at a
 missing prerequisite.
 
-- **AT (Autonomous Trading) license** — every tool this skill adds is AT-gated.
+- **A license with market-scanner access** (any paid plan) — the tools this
+    skill adds ride on the market scanner. 
 - **By-Pool MCP list mode** — so the `watchlist` pool is addressable.
 - **`mcp_arm_rating` OFF** — screening only; ratings are recorded but never open
     or close positions.
@@ -62,7 +63,7 @@ Reused from `rating-agent` (see that skill for full detail):
   signal; skip an instrument you can't get a fresh quote for.
 - `update_ratings(updates)` — submit every rating in the batch in one call.
 
-New for this skill (all AT-gated):
+New for this skill:
 
 - `run_scanner(priceAbove?, priceBelow?, count?, portfolioId?,
   portfolioName?)` — run the IB scanner into the
