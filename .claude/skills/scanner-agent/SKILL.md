@@ -1,26 +1,28 @@
 ---
 name: scanner-agent
 description: Use the invmon-mcp MCP server to sweep a large securities universe in price-banded 
-batches through InvMon's IB market scanner, rating each batch and setting aside the buy-or-better 
-names, until N of them have been identified — then expose the winners in the watchlist. (In-house; 
-not public. Requires market-scanner access.)
+batches through InvMon's IB market scanner interface, rating each batch and setting aside the instruments
+that match a specific rating, until N of them have been identified — then expose the winners in the watchlist.
+The rating (or ratings) determining a winner can be passed as an argument. By default, a winning
+rating is a Buy or a Strong Buy. 
+(In-house; not public. Requires market-scanner access.)
 ---
 
 
 # Scan and rate a large universe to find N buy-or-better names
 
 You are a seasoned financial analyst running a *screening sweep*. InvMon's IB
-market scanner returns only the top rows of a single ranked query and cannot be
+market scanner interface returns only the top rows of a single ranked query and cannot be
 paged. To look beyond that top slice you partition the universe along
 the **price axis** into disjoint bands and scan each band as its own batch. You
-rate every batch (as `rating-agent` does), **hide** the buy-or-better names to
+rate every batch (as `/rating-agent` does), **hide** the winners to
 set them aside, and move to the next band — until you have collected **N**
-winners. Then you clean up and un-hide the winners so they show up in the
+winners. Then you clean up and un-hide the matched instruments so they show up in the
 watchlist.
 
 Ratings are not binding — they inform the human. `Neutral` is a valid answer; a
 low-conviction directional call is not. This is a *screening* pass: no
-positions are opened (the group runs disarmed).
+positions are opened.
 
 The rated universe per run is roughly `batch_size × number_of_bands`. This is a
 ranked skim of each band, not exhaustive coverage — that is expected and fine
@@ -29,16 +31,14 @@ for "find N good ones among the top movers".
 
 ## Prerequisites (the user configures these once, in InvMon)
 
-This skill drives a **dedicated portfolio group** set up as follows. If a
+This skill drives a **dedicated portfolio** set up as follows. If a
 `run_scanner` call errors, re-read this list — the errors point straight at a
 missing prerequisite.
 
 - **A license with market-scanner access** (any paid plan) — the tools this
     skill adds ride on the market scanner. 
 - **By-Pool MCP list mode** — so the `watchlist` pool is addressable.
-- **`mcp_arm_rating` OFF** — screening only; ratings are recorded but never open
-    or close positions.
-- **Watchlist market scanner configured** (in the group/portfolio's scanner
+- **Watchlist market scanner configured** (in the portfolio's scanner
     settings): the base query the sweep rides on — scan code
     (e.g. *Top % Gainers*), location (e.g. NASDAQ / `STK.US.MAJOR`), and base
     filters such as a minimum daily-dollar-volume floor. Your price band is
@@ -48,20 +48,24 @@ missing prerequisite.
 - **"Find Instruments Using Scanner" OFF** — otherwise a later list would
      re-scan with the base config and clobber your band batch. `run_scanner`
      refuses to run while this is on.
-- **Watchlist list limit / scanner count ≈ your batch size** (e.g. ~40).
+- **Watchlist list limit / scanner count ≈ your batch size** (e.g. 40, perhaps
+     less in order to avoid running into TWS/market-data limitations).
 
 
 ## Tools
 
-Reused from `rating-agent` (see that skill for full detail):
+Reused from `/rating-agent` (see that skill for full detail):
 
 - `list_instruments(pool, portfolioId?, portfolioName?)` — hidden instruments
   are **excluded**, so your set-aside winners never come back in a listing. You
   mostly won't need this during the sweep (see below).
 - `get_price_history(instrumentId, period?)` — historical series; a short
-  `period` (`1d`–`5d`) gives a minutes-fresh quote. This is your ground-truth
-  signal; skip an instrument you can't get a fresh quote for.
-- `update_ratings(updates)` — submit every rating in the batch in one call.
+  `period` (`1d`–`5d`) gives a minutes-fresh quote during trading hours. This is your ground-truth
+  signal. This skill may be run outside of trading hours, in which case price data
+  may be stale (e.g. only show data up to the previous trading day's close price). 
+  Unlike ```/rating-agent```, this is acceptable for this skill.
+- `update_ratings(updates)` — submit one or more ratings; when running on the **watchlist**
+  strict batching is not required.
 
 New for this skill:
 
@@ -102,7 +106,7 @@ New for this skill:
 
 The user can pass (all optional, with sensible defaults):
 
-- `N` — how many buy-or-better names to collect before stopping (default e.g.
+- `N` — how many winners to collect before stopping (default e.g.
   10).
 - Price sweep schedule — `priceMin`, `priceMax`, and a band width (or an
   explicit list of `[lo, hi)` bands). Choose bands so the union covers the
