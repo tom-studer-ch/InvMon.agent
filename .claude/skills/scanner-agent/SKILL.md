@@ -108,10 +108,10 @@ New for this skill:
   cleanup to drop the last band's non-winners. An instrument holding a position
   is refused (reported as an error). Same per-id shape.
 
-Without an **AT** license, `hide_instruments`, `unhide_instruments` and
-`archive_instruments` accept watchlist-pool instruments only. The sweep never
-touches anything else, so this does not constrain the skill — but it explains
-the refusal if you ever point those tools elsewhere.
+Depending on the license, `hide_instruments`, `unhide_instruments` and
+`archive_instruments` may accept watchlist-pool instruments only. The sweep
+never touches anything else, so this does not constrain the skill — but it
+explains the refusal if you ever point those tools elsewhere.
 
 
 ## Arguments
