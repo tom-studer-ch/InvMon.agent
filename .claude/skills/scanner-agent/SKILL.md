@@ -50,13 +50,16 @@ missing prerequisite.
     filters such as a minimum daily-dollar-volume floor. Your price band is
     layered on top of this per batch.
 - **Watchlist replace mode ON** — each new band trims the previous band's
-    non-hidden names down to the list limit; hidden winners survive.
+    non-hidden names down to the pool's target size; hidden winners survive.
 - **"Find Instruments Using Scanner" OFF** — otherwise a later
     `list_instruments` call would re-scan with the base config and clobber your
     batch. `run_scanner` refuses to run while this is on.
-- **Watchlist list limit / scanner count ≈ your batch size** (e.g. 40, or less
-    if TWS market-data lines are tight — every visible watchlist name consumes
-    one).
+- **Watchlist scanner count ≈ your batch size** (e.g. 40, or less if TWS
+    market-data lines are tight — every visible watchlist name consumes one).
+    This doubles as the size replace mode trims the pool back to. Setting a
+    *List Limit* in the portfolio's MCP options overrides that size and also
+    caps what `list_instruments` returns; leave it empty unless you want the two
+    to differ.
 
 
 ## Tools
@@ -101,7 +104,9 @@ New for this skill:
   `{success, instrumentId, symbol}` or `{error, instrumentId}`.
 
 - `unhide_instruments(instrumentIds)` — restore hidden instruments to visible,
-  in place (no move, no repool). Used at cleanup to expose the winners. Same
+  in place (no move, no repool). Used at cleanup to expose the winners. An
+  un-hidden instrument is detached from scanner rotation, so a later
+  replace-mode scan will not trim away the winners you just exposed. Same
   per-id result shape.
 
 - `archive_instruments(instrumentIds)` — permanently delete instruments. Used at
