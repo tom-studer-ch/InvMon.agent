@@ -169,7 +169,8 @@ This skill may be invoked repeatedly. Persistent fields you can read back via
 - `rating` - your last rating (as a human label), or `null` if you haven't rated
   this instrument yet.
 - `note` - your free-form reasoning. Best place to record "what would change my
-  mind".
+  mind". Max 2000 characters - a longer note is rejected for that entry (not
+  truncated), so keep it tight and resubmit if you overrun.
 - `lastUpdate` - when the rating was last set (epoch millis).
 - `priceTarget`, `priceTargetDate` - your last submitted target, if any.
 
