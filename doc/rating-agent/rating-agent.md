@@ -49,7 +49,7 @@ Open the portfolio group's *Settings…* dialog (context menu on the group in th
 
 ![Instrument Chart Range](assets/040-edit-portfolio-group-settings.png)
 
-**5 days (15 min resolution)** gives the agent intra-day price bars: `get_price_history` defaults to this range, and short periods return quotes that are only minutes old — the freshness the skill requires before rating an instrument. 
+Setting the Default Chart Range (left) to **5 days (15 min resolution)** gives the agent intra-day price bars: `get_price_history` defaults to this range, and short periods return quotes that are only minutes old — the freshness the skill requires before rating an instrument. 
 
 ### Rebalancing settings
 
