@@ -1,11 +1,12 @@
 ---
-name: scanner-agent
-description: Use the invmon-mcp MCP server to sweep a large securities universe in price-banded
-batches through InvMon's IB market scanner interface, rating each batch and setting aside the instruments
-that match a specific rating, until N of them have been identified — then expose the winners in the watchlist.
-The rating (or ratings) that make an instrument a winner can be passed as an argument; by default a
-winner is rated `Strong Buy` or `Buy`.
-(In-house; not public. Requires market-scanner access.)
+name: market-scanner
+description: Use the invmon-mcp MCP server to sweep a large securities universe in
+  price-banded batches through InvMon's IB market scanner interface, rating each batch
+  and setting aside the instruments that match a specific rating, until N of them have
+  been identified - then expose the winners in the watchlist. The rating (or ratings)
+  that make an instrument a winner can be passed as an argument; by default a winner is
+  rated `Strong Buy` or `Buy`. One-shot; not meant to be driven in a loop.
+  (In-house; not public. Requires market-scanner access.)
 ---
 
 
@@ -15,7 +16,7 @@ You are a seasoned financial analyst running a *screening sweep*. InvMon's IB
 market scanner interface returns only the top rows of a single ranked query and
 cannot be paged. To look beyond that top slice you partition the universe along
 the **price axis** into disjoint bands and scan each band as its own batch. You
-rate every batch (as `rating-agent` does), **hide** the winners to set them
+rate every batch (as `rating-loop` does), **hide** the winners to set them
 aside, and move to the next band — until you have collected **N** winners. Then
 you clean up and un-hide the winners so they show up in the watchlist.
 
@@ -64,7 +65,7 @@ missing prerequisite.
 
 ## Tools
 
-Reused from `rating-agent` (see that skill for full detail):
+Reused from `rating-loop` (see that skill for full detail):
 
 - `list_instruments(pool, portfolioId?, portfolioName?)` — hidden instruments
   are **excluded**, so your set-aside winners never come back in a listing. You
@@ -74,7 +75,7 @@ Reused from `rating-agent` (see that skill for full detail):
   your ground-truth signal. See **Quote freshness** below for what to do when
   this skill runs outside trading hours.
 - `update_ratings(updates)` — submit one or more ratings. Submit **one call per
-  band**, covering that whole batch; unlike `rating-agent` you do not hold
+  band**, covering that whole batch; unlike `rating-loop` you do not hold
   ratings back to submit the entire run in a single call.
 
 New for this skill:
@@ -153,7 +154,7 @@ on the single-portfolio default.
       `instruments` is empty, move to the next band.
    2. For each instrument in `batch.instruments`: pull `get_price_history`
       (short period) and do focused web research (fan out sub-agents), exactly
-      as `rating-agent` does. Treat the price history as ground truth and the
+      as `rating-loop` does. Treat the price history as ground truth and the
       news as the explanation. Apply the quote-freshness rule below.
    3. `update_ratings(...)` for the whole batch in one call, with `note` (and
       `priceTarget` only on high conviction) per entry.
@@ -187,7 +188,7 @@ requirement).
 
 **Outside trading hours**, stale data is expected and acceptable — the series
 will typically end at the previous trading day's close. Rate on it. This is
-where the skill deliberately differs from `rating-agent`, which skips stale
+where the skill deliberately differs from `rating-loop`, which skips stale
 instruments unconditionally. Skip an instrument here only when it has no usable
 price history at all.
 

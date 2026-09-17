@@ -1,10 +1,10 @@
 # Autonomous Trading Agent — Set-Up Tutorial
 
-This tutorial explains a possible scenario for using the rating-agent skill.
+This tutorial explains a possible scenario for using the rating-loop skill.
 
 > The InvMon configuration explained here requires an InvMon AT key (AT = autonomous trading). **This is not a generally available feature**. 
 
-The `rating-agent` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
+The `rating-loop` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
 
 When run in a loop, together with a suitable InvMon configuration, this skill can drive autonomous trading scenarios - live or in simulation mode. The setup below explains the necessary configuration for an autonomous, simulated day-trading scenario.
 
@@ -112,13 +112,13 @@ claude
 Then run the skill once:
 
 ```
-/rating-agent
+/rating-loop
 ```
 
 or in a loop during market hours:
 
 ```
-/loop 1h /rating-agent
+/loop 1h /rating-loop
 ```
 
 The agent lists the instruments, pulls price history, researches each name, submits ratings via `update_ratings`, and prints a summary. Ratings, notes, and price targets are visible in InvMon and — with the close policies above — can trigger position closes.

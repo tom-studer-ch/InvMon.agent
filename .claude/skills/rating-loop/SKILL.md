@@ -1,8 +1,10 @@
 ---
-name: rating-agent
+name: rating-loop
 description: Use the invmon-mcp MCP server to list a set of instruments, research
   each one, and submit a rating (optionally with a price target) back to InvMon
-  to inform rebalancing. (In-house; not public.)
+  to inform rebalancing. Built to be re-run on a schedule (/loop) through the
+  trading day; for a single on-demand pass over one portfolio use
+  `portfolio-rating` instead. (In-house; not public.)
 ---
 
 # Research and rate instruments

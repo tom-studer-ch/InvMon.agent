@@ -1,6 +1,6 @@
 # Scan a Whole Market for Opportunities
 
-*A worked example of the `scanner-agent` skill.*
+*A worked example of the `market-scanner` skill.*
 
 Here's one way to put InvMon's market scanner to work: point your AI assistant at a whole market, let it scan and rate stocks for you, and hand you back a short list of the names that match the rating you were after.
 
@@ -94,13 +94,13 @@ claude
 Then start the skill:
 
 ```
-/scanner-agent
+/market-scanner
 ```
 
 Left to itself the skill goes looking for **10** names rated `Strong Buy` or `Buy`, sweeping **\$5 to \$100 in \$5 bands**. Since we want the *downside* instead, just say so in plain language when you launch it:
 
 ```
-/scanner-agent find 5 names rated Sell or Strong Sell between $5 and $100, bands of $5
+/market-scanner find 5 names rated Sell or Strong Sell between $5 and $100, bands of $5
 ```
 
 Everything is set this way — how many names, which ratings count, and the price range all come straight from what you type. We're keeping the default \$5–\$100 range in \$5 bands; with only 5 names to find, the sweep will almost always stop long before it works through all of them.
