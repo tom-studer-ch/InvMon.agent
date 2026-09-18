@@ -31,13 +31,12 @@ doesn't lean.
 - `list_portfolios()` - returns `{id, name}` per portfolio in this server's portfolio
   group. Use it to resolve the portfolio when none was named.
 
-- `list_instruments(portfolioId?, portfolioName?)` - the portfolio's instruments;
+- `list_instruments(portfolioId?, portfolioName?, pool?)` - the portfolio's instruments;
   this is what you derive the market from. Each entry carries `symbol`,
   `securityName`, `instrumentType`, `currency`, `exchange`, `lastTradePrice` and
   `lastTradeTimestamp`, which between them tell you the venue, currency and asset-class
-  mix. In **By Pool** MCP list mode the tool takes a required `pool` argument
-  (`positions`, `candidates` or `watchlist`); read `positions` for actual exposure,
-  and fall back to `candidates` when the portfolio holds no positions yet.
+  mix. Pass `pool: "positions"` to read the actual exposure, and fall back to
+  `pool: "candidates"` when the portfolio holds no positions yet.
 
 - `get_price_history(instrumentId, period?)` - optional here. A short `period`
   (`1d`-`5d`) on two or three of the portfolio's largest names is a quick sanity

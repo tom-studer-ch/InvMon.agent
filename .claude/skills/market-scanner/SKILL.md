@@ -44,7 +44,6 @@ missing prerequisite.
     license includes scanner access.
 - **An IB account, connected** — the sweep runs IB market scans; other providers
     do not support scanning.
-- **By-Pool MCP list mode** — so the `watchlist` pool is addressable.
 - **Watchlist market scanner configured** (in the portfolio's scanner
     settings): the base query the sweep builds on — scan code
     (e.g. *Top % Gainers*), location (e.g. NASDAQ / `STK.US.MAJOR`), and base
@@ -52,7 +51,7 @@ missing prerequisite.
     layered on top of this per batch.
 - **Watchlist replace mode ON** — each new band trims the previous band's
     non-hidden names down to the pool's target size; hidden winners survive.
-- **"Find Instruments Using Scanner" OFF** — otherwise a later
+- **"Trigger Scanner" OFF** — otherwise a later
     `list_instruments` call would re-scan with the base config and clobber your
     batch. `run_scanner` refuses to run while this is on.
 - **Watchlist scanner count ≈ your batch size** (e.g. 40, or less if TWS
@@ -67,7 +66,8 @@ missing prerequisite.
 
 Reused from `rating-loop` (see that skill for full detail):
 
-- `list_instruments(pool, portfolioId?, portfolioName?)` — hidden instruments
+- `list_instruments(pool?, portfolioId?, portfolioName?)` — pass `pool: "watchlist"`
+  for the watchlist. Hidden instruments
   are **excluded**, so your set-aside winners never come back in a listing. You
   mostly won't need this during the sweep (see below).
 - `get_price_history(instrumentId, period?)` — historical series; a short
@@ -93,7 +93,7 @@ New for this skill:
     portfolio.
   - Returns `{pool, priceAbove?, priceBelow?, count, instruments:[...]}`, or an
     `{error}`: no scanner license, account not connected, the account's provider
-    does not support scanning, "Find Instruments Using Scanner" is on, a scan is
+    does not support scanning, "Trigger Scanner" is on, a scan is
     already running, ambiguous portfolio, or scanner timeout.
   - **Work the loop off this return** — the `instruments` array *is* your batch.
     You do not need a separate `list_instruments` call during the sweep.

@@ -29,14 +29,13 @@ exactly as described in `rating-loop`; the essentials:
 - `list_portfolios()` - returns the portfolios of this server's portfolio group:
   `{id, name}` per portfolio.
 
-- `list_instruments(portfolioId?, portfolioName?)` - the instruments to analyze.
+- `list_instruments(portfolioId?, portfolioName?, pool?)` - the instruments to analyze.
   Always pass the portfolio for this skill (see **Arguments**); without one the tool
   returns instruments across *every* portfolio in the group, which is not what this
   skill is for. `portfolioName` is the simple portfolio name, unique within the
-  group. In **Combined** MCP list mode positions and candidates come back together;
-  in **By Pool** mode the tool takes a required `pool` argument (`positions`,
-  `candidates` or `watchlist`) - rate the pool the user named, `positions` by
-  default.
+  group. Without `pool`, positions and candidates come back together; with it
+  (`positions`, `candidates` or `watchlist`), only that pool. If the user named a
+  pool, pass it; otherwise leave `pool` out.
 
   Returned per instrument: `id, symbol, securityName, instrumentType, currency,
   exchange, note, lastUpdate, priceTarget, priceTargetDate, rating, lastTradePrice,
@@ -103,8 +102,8 @@ is the display label for the same value (`Buy/adjust` reads back as `Buy Adjust`
   research - this skill rates one portfolio, and guessing wastes a full research
   pass on the wrong set. The user may answer "all", in which case rate every
   portfolio in the group and keep the summary grouped per portfolio.
-- The user may also name a **pool** (positions, candidates, watchlist) in a By-Pool
-  group. Default to the positions pool.
+- The user may also name a **pool** (positions, candidates, watchlist); pass it as
+  `pool`. Without one, rate positions and candidates together.
 
 
 ## Workflow

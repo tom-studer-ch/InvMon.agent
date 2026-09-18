@@ -28,7 +28,6 @@ Make a new portfolio group *just for scanning*. In the Portfolios panel, add a n
 ![Add a Portfolio Group](assets/010-add-portfolio-group.png)
 
 - **Enable MCP Server** on port `55206` — this is the little local connection your AI assistant talks to. Keep the port matching the one in this repo's `.mcp.json`.
-- **Instruments List Mode: By Pool** — the important one. The skill needs to address the *watchlist* by name, which only *By Pool* mode allows. In *Combined* mode there's no separate watchlist to point at, and the scan can't run.
 - **Simulation** — optional. Since the scan only records ratings and never trades, you don't need it; turn it on if you'd simply rather keep the whole group sandboxed.
 
 
@@ -58,7 +57,7 @@ Run the scan in the evening and it happily rates on the previous day's close ins
 ![MCP Server Options](assets/040-mcp-options.png)
 
 - **List Limit 10** — this is our batch size, the "10 at a time" from the top. It caps the watchlist at 10 names, and it's the size the scanner trims back to between bands. IB tops out around 50 rows per scan anyway (that's the whole reason for sweeping band by band), so 10 sits comfortably under the ceiling — and a small batch keeps your TWS market-data lines free, since every visible watchlist name uses one.
-- **Find Instruments Using Scanner** — must be **off**. Left on, InvMon would re-run the scanner behind the AI's back and wipe out the batch it just built. The skill checks for this and refuses to run rather than quietly corrupt the sweep.
+- **Trigger Scanner** — must be **off**. Left on, InvMon would re-run the scanner behind the AI's back and wipe out the batch it just built. The skill checks for this and refuses to run rather than quietly corrupt the sweep.
 - **Random List Order** — optional; shuffles each batch, which can take a little bias out of the ratings.
 
 
@@ -126,14 +125,13 @@ Most hiccups are a setup step that isn't quite right, and the scan usually tells
 | What you see | What it means | What to do |
 |---|---|---|
 | `run_scanner is not available.` | Your plan doesn't include the market scanner. | Upgrade to a paid plan. |
-| `run_scanner requires 'Find Instruments Using Scanner' to be OFF…` | That option is on and would clobber each batch. | Turn it off in *MCP Server Options* (step 3). |
+| `run_scanner requires 'Trigger Scanner' to be OFF…` | That option is on and would clobber each batch. | Turn it off in *MCP Server Options* (step 3). |
 | `Account is not connected; cannot run the scanner.` | TWS isn't running or isn't connected. | Start TWS and confirm the account connects. |
 | `The account's provider does not support market scanning.` | The portfolio isn't pointed at an IB account. | Point the group at your IB account. |
 | `A scanner run is already in progress for this portfolio.` | A scan (manual or from a previous call) is still running. | Wait for it to finish, then re-run. |
 | `Portfolio not found; specify portfolioId or portfolioName…` | The group holds more than one portfolio. | Name the portfolio when you start the skill, or keep the group to one. |
 | `Scanner timed out after 60 seconds.` | IB didn't answer in time. | Usually a blip — check the TWS connection and re-run. |
 | `This tool call is currently limited to the watchlist pool.` | On your plan the set-aside tools only touch watchlist names. | Expected — the scan only ever touches the watchlist. If you see it, something aimed the tools elsewhere. |
-| The AI reports a missing `watchlist` pool | The group is in *Combined* list mode. | Switch **Instruments List Mode** to *By Pool* (step 1). |
 | Bands come back empty that shouldn't | Either a price filter got baked into the saved scan, or those names were cleared earlier this session. | Remove the base price filter (step 4). For the second cause, see below. |
 
 **Why a second run in the same session finds less.** Once the scanner clears a name out during a run, InvMon keeps it out for the rest of the session so a later band won't waste time re-rating something already dropped. Within one run that's exactly what you want. Across two runs it means the second one is working from a thinner universe — so **restart InvMon before a fresh scan**, or bring individual names back via *Restore Hidden Instrument…* (in the Delete menu).

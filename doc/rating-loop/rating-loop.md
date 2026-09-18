@@ -27,9 +27,7 @@ Options worth noting:
 
 - **Simulation** — all trades in this group are simulated. 
 - **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match `.mcp.json`).
-- **Instruments List Mode: Combined** — the agent's `list_instruments` call returns positions and candidates together.
 - **Arm Ratings** — allows the agent's submitted ratings to actually drive target weights and close policies.
-- **Auto Delta Order Submission** is on. When on for a simulated portfolio group, delta orders are auto-executed (simulated at the current bid/ask price, honoring slippage as configured below).
 
 ## 2. Add the portfolios
 
@@ -60,9 +58,9 @@ Setting the Default Chart Range (left) to **5 days (15 min resolution)** gives t
 **Enable Rebalancing Orders** is off - we only buy and sell full positions; we don't rebalance/adjust open positions. **Trade on Adjust Ratings** is off. Buy/adjust is too weak a signal (or so we assume). **Force Trade on Strong Ratings** must be off. If it were on, InvMon would trade any Strong Buy or Strong Sell rating, even if all portfolio target slots are already filled. 
 
 
-### Order type, size & limit calculation
+### Order creation
 
-![Order Type, Size & Limit Calculation](assets/070-order-type.png)
+![Order Creation](assets/070-order-type.png)
 
 Defaults are fine here: adaptive orders, a 0.5% slippage cap, and trading restricted to regular trading hours. Slippage is relevant for simulation mode (will be used to calculate the estimated trade price - adjust the slippage to make the simulation more or less conservative in terms of achieved execution prices). The order type is not relevant for simulations.
 
@@ -72,11 +70,11 @@ Defaults are fine here: adaptive orders, a 0.5% slippage cap, and trading restri
 
 These policies close positions automatically and require an active TWS connection. The two **(MCP)** policies are what make the agent's ratings actionable: **Close on Neutral** and **Close on Counter-Rating** close a position when the agent downgrades it to Neutral or rates it against the position's direction. **EOD Auto-Close** flattens remaining positions 20 minutes before the session ends — this setup is intra-day.
 
-### Autonomous trading gates
+### Order execution
 
-![Autonomous Trading Gates](assets/090-autonomous-trading-gates.png)
+![Order Execution](assets/090-autonomous-trading-gates.png)
 
-Sanity limits every automatically created order must pass (fresh quote, tight spread, limited price deviation and exposure overshoot). **Hard Gates** is an important option for simulations - with the option on, if a gate fails, no delta order is created and no execution results. The autonomous-trading on/off switches themselves live in the group's *Targets & Rebalancing* dialog (step 1).
+**Auto-Submit Delta Orders in Simulation Mode** is on: the simulated group's delta orders are executed as soon as they are created (simulated at the current bid/ask price, honoring the slippage configured above). The fields below it are sanity limits a live order would have to pass before being transmitted (fresh quote, tight spread, limited price deviation). **Enforce Gates at Order Creation** is an important option for simulations - with the option on, if a gate fails, no delta order is created and no execution results.
 
 > Failing gates are recorded on their respective instrument. Instruments with continuously failing gates are basically untradable (in a timely fashion) under current market conditions. Consecutive runs of the market scanner will recycle those first.
 
@@ -84,8 +82,8 @@ Sanity limits every automatically created order must pass (fresh quote, tight sp
 
 ![MCP Server Options](assets/100-mcp-options.png)
 
-- **List Limit 10** — caps how many instruments `list_instruments` returns per call, keeping the agent's research fan-out bounded. In **Combined** mode (see above), `list_instruments` will return all of the portfolio's positions plus up to this number of candidates.
-- **Find Instruments Using Scanner** — a `list_instruments` call triggers the portfolios' saved market scanners first, so the agent always rates a fresh candidate set (see next step).
+- **List Limit 10** — caps how many instruments `list_instruments` returns per call, keeping the agent's research fan-out bounded. Called without a pool, as this agent does, `list_instruments` returns all of the portfolio's positions plus up to this number of candidates.
+- **Trigger Scanner** — a `list_instruments` call triggers the portfolios' saved market scanners first, so the agent always rates a fresh candidate set (see next step).
 - **Random List Order** — shuffles the returned list, a minor feature, potentially lowering rating bias.
 
 ## 4. Configure the market scanners
@@ -98,7 +96,7 @@ Each portfolio gets an IB market scanner that supplies its candidates: *Add from
 
 Both scan US *Listed/NASDAQ* corporate stocks by **Top %**, filtered to liquid names (average volume ≥ 2,000,000) that are shortable (shortable shares ≥ 2000), capped at 10 results with **Replace Existing** so the candidate pool rotates instead of growing. The only difference is the sort direction (the arrow next to *Variable*): descending for `Long` (top gainers), ascending for `Short` (top losers).
 
-**Don't run scanner – only save changes** stores the configuration without running it — the scans are executed later by the MCP server (via *Find Instruments Using Scanner*) whenever the agent lists instruments.
+**Don't run scanner – only save changes** stores the configuration without running it — the scans are executed later by the MCP server (via *Trigger Scanner*) whenever the agent lists instruments.
 
 ## 5. Run the agent
 

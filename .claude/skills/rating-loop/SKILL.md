@@ -34,9 +34,9 @@ The InvMon MCP server exposes the four tools relevant to this skill:
     that portfolio.
   - `portfolioName` is the simple portfolio name (unique within this server's
     portfolio group).
-  - This skill assumes the portfolio group is in **Combined** MCP list mode, in
-    which the tool has no `pool` argument and returns all positions and
-    candidates together - everything that is to be rated.
+  - Call it without the optional `pool` argument: it then returns all positions
+    and candidates together - everything that is to be rated. (A `pool` argument
+    would restrict the list to a single pool.)
 
 - `get_price_history(instrumentId, period?)` - historical price series. Returns
   an envelope `{instrumentId, symbol, currency, historyCode, intervalSizeMs,
