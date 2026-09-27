@@ -1,20 +1,18 @@
-# Autonomous Trading Agent — Set-Up Tutorial
+# Rating-Loop Agent — Simulated Trading Set-Up
 
 This tutorial explains a possible scenario for using the rating-loop skill.
 
-> The InvMon configuration explained here requires an InvMon AT key (AT = autonomous trading). **This is not a generally available feature**. 
-
 The `rating-loop` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
 
-When run in a loop, together with a suitable InvMon configuration, this skill can drive autonomous trading scenarios - live or in simulation mode. The setup below explains the necessary configuration for an autonomous, simulated day-trading scenario.
+When run in a loop, together with a suitable InvMon configuration, this skill can drive a simulated trading scenario end to end: the agent rates, InvMon turns the ratings into delta orders, and the simulation executes them at current prices. The setup below explains the necessary configuration for an automated, simulated day-trading scenario.
 
 > This setup provides one possible scenario. The scenario outlined below had been test-run over a two-week period with excellent performance during a time where mostly sell ratings surfaced. **Caveat: Sell ratings result in short-sales which, due to margin requirements, may be difficult to execute in real-life scenarios and come with potentially unlimited risk**. 
 
 
 ## Prerequisites
 
-- InvMon running with an InvMon AT key (personally provided - not a generally available feature).
-- Interactive Brokers TWS running and connected to your IB account.
+- InvMon running on a paid plan — the MCP server and the portfolio settings below need one.
+- Interactive Brokers TWS running and connected to your IB account. Nothing is ever sent to IB in this setup, but the live quotes from that connection are what the close policies and trading gates act on, and the candidate scanners are IB market scanners.
 - Claude Code with this repository (`InvMon.agent`) as the working directory. The bundled `.mcp.json` expects the MCP server on port `55206` — keep the port below in sync, or adjust `.mcp.json`.
 
 ## 1. Create the portfolio group
@@ -25,9 +23,10 @@ Create a new portfolio group for the agent to work in.
 
 Options worth noting:
 
-- **Simulation** — all trades in this group are simulated. 
+- **Simulation** — all trades in this group are simulated. Leave this on: it is what makes the rest of this setup available without a live-trading plan, and it is why no order can ever reach your broker.
 - **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match `.mcp.json`).
-- **Arm Ratings** — allows the agent's submitted ratings to actually drive target weights and close policies.
+
+What makes the agent's ratings actually *do* something — drive target weights, open and close positions — is a portfolio setting, **Auto-Apply Ratings/Sentiment in Simulation Mode**, configured in step 3.
 
 ## 2. Add the portfolios
 
@@ -60,28 +59,36 @@ Setting the Default Chart Range (left) to **5 days (15 min resolution)** gives t
 
 ### Order creation
 
-![Order Creation](assets/070-order-type.png)
+![Order Creation](assets/070-order-creation.png)
 
-Defaults are fine here: adaptive orders, a 0.5% slippage cap, and trading restricted to regular trading hours. Slippage is relevant for simulation mode (will be used to calculate the estimated trade price - adjust the slippage to make the simulation more or less conservative in terms of achieved execution prices). The order type is not relevant for simulations.
+The first two rows are fine at their defaults: adaptive orders, a 0.5% slippage cap, trading restricted to regular trading hours, and no fractional order sizes. Slippage is relevant for simulation mode (it is used to calculate the estimated trade price — adjust it to make the simulation more or less conservative about the execution prices it assumes). The order type itself is not relevant for simulations.
+
+The last row is what drives the simulation; both checkboxes appear only for a portfolio group in simulation mode:
+
+- **Auto-Submit Delta Orders in Simulation Mode** is on: the group's delta orders are executed as soon as they are created, at the current bid/ask price and honoring the slippage above. Without it you would have to submit each batch by hand, which defeats the point of a loop.
+- **Simulate Gates** is on: the trading gates from the next section are applied when a delta order is *created*, so the simulation only trades under conditions in which a live order would actually have been executed. A live account applies those gates when it transmits an order; a simulation transmits nothing, so this is what stands in for that.
+
+> Failing gates are recorded on their respective instrument. Instruments with continuously failing gates are basically untradable (in a timely fashion) under current market conditions. Consecutive runs of the market scanner will recycle those first.
+
+### Trading gates
+
+![Trading Gates](assets/090-trading-gates.png)
+
+These four thresholds are the market conditions an order has to meet: a fresh quote, a tight enough spread, a limited deviation of the computed limit price from the mid price, and a cap on the order's share of average daily volume. They are thresholds only — *Simulate Gates* above is what applies them here.
 
 ### Close policies
 
 ![Close Policies](assets/080-close-policies.png)
 
-These policies close positions automatically and require an active TWS connection. The two **(MCP)** policies are what make the agent's ratings actionable: **Close on Neutral** and **Close on Counter-Rating** close a position when the agent downgrades it to Neutral or rates it against the position's direction. **EOD Auto-Close** flattens remaining positions 20 minutes before the session ends — this setup is intra-day.
+These policies close positions automatically. The two **(MCP)** policies are what let the agent close what it opened: **Close on Neutral** and **Close on Counter-Rating** close a position when the agent downgrades it to Neutral or rates it against the position's direction. **Close on Price Target** closes a position once it reaches the price target the agent submitted with its rating. **EOD Auto-Close** flattens remaining positions 20 minutes before the session ends — this setup is intra-day.
 
-### Order execution
-
-![Order Execution](assets/090-autonomous-trading-gates.png)
-
-**Auto-Submit Delta Orders in Simulation Mode** is on: the simulated group's delta orders are executed as soon as they are created (simulated at the current bid/ask price, honoring the slippage configured above). The fields below it are sanity limits a live order would have to pass before being transmitted (fresh quote, tight spread, limited price deviation). **Enforce Gates at Order Creation** is an important option for simulations - with the option on, if a gate fails, no delta order is created and no execution results.
-
-> Failing gates are recorded on their respective instrument. Instruments with continuously failing gates are basically untradable (in a timely fashion) under current market conditions. Consecutive runs of the market scanner will recycle those first.
+The stop policies (**Trailing Stop**, **Stop-Loss**, and the shared **Confirmation Trades**) and **EOD Auto-Close** are evaluated on live trade prints, so they need the TWS connection from the prerequisites. They are offered here because the group runs in simulation mode.
 
 ### MCP server options
 
 ![MCP Server Options](assets/100-mcp-options.png)
 
+- **Auto-Apply Ratings/Sentiment in Simulation Mode** — the setting this whole scenario turns on. Without it, a rating the agent submits is only *recorded* as an analyst rating: you would see it on the instrument, and nothing else would happen. With it on, the rating is written through to the instrument's own rating, which is what drives target weights and rebalancing, and a submitted price target is written through to the instrument's price target, which *Close on Price Target* acts on. The same applies to a sentiment submitted with `set_sentiment`.
 - **List Limit 10** — caps how many instruments `list_instruments` returns per call, keeping the agent's research fan-out bounded. Called without a pool, as this agent does, `list_instruments` returns all of the portfolio's positions plus up to this number of candidates.
 - **Trigger Scanner** — a `list_instruments` call triggers the portfolios' saved market scanners first, so the agent always rates a fresh candidate set (see next step).
 - **Random List Order** — shuffles the returned list, a minor feature, potentially lowering rating bias.
@@ -119,6 +126,6 @@ or in a loop during market hours:
 /loop 1h /rating-loop
 ```
 
-The agent lists the instruments, pulls price history, researches each name, submits ratings via `update_ratings`, and prints a summary. Ratings, notes, and price targets are visible in InvMon and — with the close policies above — can trigger position closes.
+The agent lists the instruments, pulls price history, researches each name, submits ratings via `update_ratings`, and prints a summary. Ratings, notes, and price targets are visible in InvMon and — with *Auto-Apply Ratings/Sentiment in Simulation Mode* on — drive the simulated trading: new positions through the rebalancer, and closes through the policies above.
 
 <!-- Editorial note: possible extensions — a screenshot of the InvMon UI after a run (ratings/notes visible on the instruments), a sample agent console summary, and a short troubleshooting section (MCP port mismatch, missing IB market data subscription). -->
