@@ -26,7 +26,8 @@ volume - take possible near-term effects of this into consideration.
 The InvMon MCP server exposes the four tools relevant to this skill:
 
 - `list_portfolios()` - returns the portfolios of this server's portfolio group:
-  `{id, name}` per portfolio.
+  `{id, name, sentiment}` per portfolio. `sentiment` is the last market sentiment
+  submitted via `set_sentiment`, or null.
 
 - `list_instruments(...)` - returns instruments for analysis.
   - Arguments: `portfolioId?`, `portfolioName?`. Without arguments, the tool

@@ -27,7 +27,8 @@ The InvMon MCP server exposes the four tools relevant to this skill. They behave
 exactly as described in `rating-loop`; the essentials:
 
 - `list_portfolios()` - returns the portfolios of this server's portfolio group:
-  `{id, name}` per portfolio.
+  `{id, name, sentiment}` per portfolio. `sentiment` is the last market sentiment
+  submitted via `set_sentiment`, or null.
 
 - `list_instruments(portfolioId?, portfolioName?, pool?)` - the instruments to analyze.
   Always pass the portfolio for this skill (see **Arguments**); without one the tool

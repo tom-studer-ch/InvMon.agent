@@ -56,9 +56,10 @@ The InvMon MCP server exposes two tools relevant to this skill:
   portfolio updated: `{success, portfolioId, portfolioName, sentiment}` or
   `{error}`.
 
-- `list_portfolios()` - returns `{id, name}` per portfolio in this server's
-  portfolio group. Only needed when you were given a portfolio name to resolve, or
-  when you want to know what the group holds before reporting a mismatch.
+- `list_portfolios()` - returns `{id, name, sentiment}` per portfolio in this server's
+  portfolio group. `sentiment` is your last submitted reading, or null. Only needed
+  when you were given a portfolio name to resolve, or when you want to know what the
+  group holds before reporting a mismatch.
 
 | `sentiment` value |
 |---|

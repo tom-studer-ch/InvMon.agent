@@ -28,8 +28,9 @@ doesn't lean.
 
 ## Tools
 
-- `list_portfolios()` - returns `{id, name}` per portfolio in this server's portfolio
-  group. Use it to resolve the portfolio when none was named.
+- `list_portfolios()` - returns `{id, name, sentiment}` per portfolio in this server's
+  portfolio group; `sentiment` is your last submitted reading, or null. Use it to
+  resolve the portfolio when none was named.
 
 - `list_instruments(portfolioId?, portfolioName?, pool?)` - the portfolio's instruments;
   this is what you derive the market from. Each entry carries `symbol`,
