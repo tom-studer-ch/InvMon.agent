@@ -59,6 +59,7 @@ Run the scan in the evening and it happily rates on the previous day's close ins
 - **List Limit 10** — this is our batch size, the "10 at a time" from the top. It caps the watchlist at 10 names, and it's the size the scanner trims back to between bands. IB tops out around 50 rows per scan anyway (that's the whole reason for sweeping band by band), so 10 sits comfortably under the ceiling — and a small batch keeps your TWS market-data lines free, since every visible watchlist name uses one.
 - **Trigger Scanner** — must be **off**. Left on, InvMon would re-run the scanner behind the AI's back and wipe out the batch it just built. The skill checks for this and refuses to run rather than quietly corrupt the sweep.
 - **Random List Order** — optional; shuffles each batch, which can take a little bias out of the ratings.
+- **Auto-Apply Ratings/Sentiment in Simulation Mode** — appears only if you turned *Simulation* on back in step 1, and should stay **off** (it is off by default). This is a screening pass: the ratings the AI submits are meant to sit on the watchlist for you to read. Leaving this off keeps them from being written through to the instruments' own ratings, which is what drives target weights and rebalancing.
 
 
 ## 4. Configure the watchlist market scanner
