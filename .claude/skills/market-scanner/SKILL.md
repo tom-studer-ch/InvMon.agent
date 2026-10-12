@@ -101,7 +101,8 @@ New for this skill:
 - `hide_instruments(instrumentIds)` — set instruments aside. A hidden instrument
   is excluded from InvMon's re-balancing algorithm, survives watchlist
   replace-mode trimming, and disappears from listings. This is how you preserve
-  winners across bands. Returns one result per id:
+  winners across bands. An instrument holding a position is refused (reported as
+  an error). Returns one result per id:
   `{success, instrumentId, symbol}` or `{error, instrumentId}`.
 
 - `unhide_instruments(instrumentIds)` — restore hidden instruments to visible,
