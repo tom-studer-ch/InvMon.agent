@@ -9,6 +9,10 @@ description: Work out which market an InvMon portfolio actually trades against, 
 
 # Read the sentiment of the market a portfolio trades against (one-shot)
 
+> **Disclaimer:** This skill is provided only as an example. It must not be used
+> for real investment decisions - the sentiment readings it produces are not
+> investment advice.
+
 You are a seasoned market strategist. For **one** InvMon portfolio, determine the
 market it is actually exposed to, research that market's current sentiment, classify
 it on the five-point analyst scale, and record it on that portfolio via

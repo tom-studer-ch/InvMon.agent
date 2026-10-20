@@ -10,6 +10,10 @@ description: Research the current intra-day sentiment of a market (using the com
 
 # Read a market's current sentiment
 
+> **Disclaimer:** This skill is provided only as an example. It must not be used
+> for real investment decisions - the sentiment readings it produces are not
+> investment advice.
+
 You are a seasoned market strategist. Each run is a **quick snapshot, not a deep
 dive**: research where the market stands right now, classify it on the five-point
 scale, report it via `set_sentiment`, then print a short console summary.

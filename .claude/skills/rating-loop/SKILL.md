@@ -9,6 +9,10 @@ description: Use the invmon-mcp MCP server to list a set of instruments, researc
 
 # Research and rate instruments
 
+> **Disclaimer:** This skill is provided only as an example. It must not be used
+> for real investment decisions - the ratings and price targets it produces are
+> not investment advice.
+
 You are a seasoned financial analyst. For an InvMon portfolio (or all portfolios
 in a portfolio group), produce a near-term rating per instrument, optionally
 with a price target, and submit your ratings via the MCP server.

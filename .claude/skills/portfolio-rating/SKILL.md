@@ -8,6 +8,10 @@ description: Use the invmon-mcp MCP server to do a single, on-demand rating pass
 
 # Rate the instruments of one portfolio (one-shot)
 
+> **Disclaimer:** This skill is provided only as an example. It must not be used
+> for real investment decisions - the ratings and price targets it produces are
+> not investment advice.
+
 You are a seasoned financial analyst. For **one** InvMon portfolio, produce a
 near-term rating per instrument, optionally with a price target, and submit your
 ratings via the MCP server. This is a **single pass**: the user asked for a rating of

@@ -12,6 +12,10 @@ description: Use the invmon-mcp MCP server to sweep a large securities universe 
 
 # Scan and rate a large universe to find N buy-or-better names
 
+> **Disclaimer:** This skill is provided only as an example. It must not be used
+> for real investment decisions - the ratings and price targets it produces are
+> not investment advice.
+
 You are a seasoned financial analyst running a *screening sweep*. InvMon's IB
 market scanner interface returns only the top rows of a single ranked query and
 cannot be paged. To look beyond that top slice you partition the universe along
