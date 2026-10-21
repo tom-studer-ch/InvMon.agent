@@ -2,6 +2,8 @@
 
 *A worked example of the `market-scanner` skill.*
 
+> **Disclaimer:** This tutorial and the `market-scanner` skill it describes are provided only as an example. They must not be used for real investment decisions — the ratings and price targets the skill produces are not investment advice.
+
 Here's one way to put InvMon's market scanner to work: point your AI assistant at a whole market, let it scan and rate stocks for you, and hand you back a short list of the names that match the rating you were after.
 
 In this walkthrough we go hunting for the **5 weakest names** in the US market — stocks the AI rates **Sell** or **Strong Sell** — looking at them **10 at a time**. The numbers and the rating are yours to change: *"find me 8 Strong Buys"*, *"find 3 names rated Sell between \$20 and \$50"*, and so on.

@@ -1,5 +1,7 @@
 # InvMon Agent Skills
 
+> **Disclaimer:** The skills and tutorials in this repository are provided only as an example. They must not be used for real investment decisions — the ratings, price targets and sentiment readings the skills produce are not investment advice.
+
 ## Skills
 
 This repository contains a number of Claude Code skills. See folder .claude/skills. 

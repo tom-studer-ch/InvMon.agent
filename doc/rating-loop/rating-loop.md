@@ -1,12 +1,14 @@
 # Rating-Loop Agent — Simulated Trading Set-Up
 
+> **Disclaimer:** This tutorial and the `rating-loop` skill it describes are provided only as an example. They must not be used for real investment decisions — the ratings and price targets the skill produces are not investment advice.
+
 This tutorial explains a possible scenario for using the rating-loop skill.
 
 The `rating-loop` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
 
 When run in a loop, together with a suitable InvMon configuration, this skill can drive a simulated trading scenario end to end: the agent rates, InvMon turns the ratings into delta orders, and the simulation executes them at current prices. The setup below explains the necessary configuration for an automated, simulated day-trading scenario.
 
-> This setup provides one possible scenario. The scenario outlined below had been test-run over a two-week period with excellent performance during a time where mostly sell ratings surfaced. **Caveat: Sell ratings result in short-sales which, due to margin requirements, may be difficult to execute in real-life scenarios and come with potentially unlimited risk**. 
+> This setup provides one possible scenario. **Note that Sell ratings result in simulated short-sales which, due to margin requirements, may be difficult to execute in real-life scenarios and come with potentially unlimited risk**. 
 
 
 ## Prerequisites
