@@ -1,0 +1,14 @@
+{
+  "enabledMcpjsonServers": [
+    "invmon-mcp"
+  ],
+  "permissions": {
+    "allow": [
+      "mcp__invmon-mcp__list_portfolios",
+      "mcp__invmon-mcp__list_instruments",
+      "mcp__invmon-mcp__get_price_history",
+      "mcp__invmon-mcp__update_ratings",
+      "mcp__invmon-mcp__set_sentiment"
+    ]
+  }
+}
