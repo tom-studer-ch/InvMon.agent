@@ -4,7 +4,7 @@ description: Research the current intra-day sentiment of a market (using the com
   analyst notation Very Bearish, Bearish, Neutral, Bullish, Very Bullish) using the
   web and report it to InvMon via the set_sentiment MCP tool. The market is an
   optional argument; without one, read the broad US market. Built to be re-run on a
-  schedule (/loop) through the trading day; for a single on-demand read derived from
+  schedule through the trading day; for a single on-demand read derived from
   a portfolio's actual holdings use `portfolio-sentiment` instead.
 ---
 
@@ -131,16 +131,20 @@ news correspondingly higher.
    including anything that would flip it on the next run.
 
 
-## Running this skill in a loop
+## Running this skill on a schedule
 
-If you have been invoked as part of a /loop (Cron), stop the loop once the
-**relevant market's** trading day ends - the session of the market you are reading,
-not the US session by default.
+This skill is built to be re-run through the trading day - by your agent's own
+scheduler (e.g. `/loop` in Claude Code) or by an external one that starts the
+agent non-interactively. Once the **relevant market's** trading day has ended -
+the session of the market you are reading, not the US session by default - don't
+start a new read: say so in the summary, and stop the schedule if your agent lets
+you.
 
-This skill uses the InvMon MCP server over localhost, so it can only run in a
-**local** session (remote execution not supported) - always run it in the current
-session.
+This skill talks to the InvMon MCP server on `localhost`, so your agent must
+run on the same computer as InvMon - a cloud or remote agent session can't reach
+it.
 
 **Requirements:** a paid InvMon plan and the MCP server enabled on the portfolio
-group (*Enable MCP Server* in the group's *MCP Server Options*). If the
-`invmon-mcp` tools are missing, the MCP server is the first thing to check.
+group (*Enable MCP Server* in the group's *MCP Server Options*), and web search
+enabled in your agent. If the `invmon-mcp` tools are missing, the MCP server is
+the first thing to check.

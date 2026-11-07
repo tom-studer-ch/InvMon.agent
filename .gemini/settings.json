@@ -1,0 +1,10 @@
+{
+  "context": {
+    "fileName": ["AGENTS.md", "GEMINI.md"]
+  },
+  "mcpServers": {
+    "invmon-mcp": {
+      "httpUrl": "http://localhost:55206/mcp"
+    }
+  }
+}

@@ -48,6 +48,7 @@ missing prerequisite.
     archive tools only when the plan includes scanner access.
 - **The MCP server enabled** on the portfolio group (*Enable MCP Server* in the
     group's *MCP Server Options*).
+- **Web search enabled in your agent** — every batch is researched on the web.
 - **An IB account, connected** — the sweep runs IB market scans; other providers
     do not support scanning.
 - **Watchlist market scanner configured** (in the portfolio's scanner
@@ -161,8 +162,8 @@ on the single-portfolio default.
    1. `batch = run_scanner(priceAbove=lo, priceBelow=hi, count=batch_size)`. If
       `instruments` is empty, move to the next band.
    2. For each instrument in `batch.instruments`: pull `get_price_history`
-      (short period) and do focused web research (fan out sub-agents), exactly
-      as `rating-loop` does. Treat the price history as ground truth and the
+      (short period) and do focused web research (fanned out to sub-agents
+      if your agent has them), exactly as `rating-loop` does. Treat the price history as ground truth and the
       news as the explanation. Apply the quote-freshness rule below.
    3. `update_ratings(...)` for the whole batch in one call, with `note` (and
       `priceTarget` only on high conviction) per entry.
@@ -227,7 +228,8 @@ price history at all.
 
 ## Running this skill
 
-This skill uses the InvMon MCP server over localhost, so it can only run in
-a **local** session (remote execution not supported). It is a **one-shot
-sweep**: it iterates bands until `N` winners are found (or the schedule is
-exhausted), cleans up, and exits — it is not meant to be driven in a `/loop`.
+This skill talks to the InvMon MCP server on `localhost`, so your agent must
+run on the same computer as InvMon — a cloud or remote agent session can't reach
+it. It is a **one-shot sweep**: it iterates bands until `N` winners are found
+(or the schedule is exhausted), cleans up, and exits — it is not meant to be
+re-run on a schedule.

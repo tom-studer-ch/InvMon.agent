@@ -6,7 +6,7 @@
 
 This tutorial explains a possible scenario for using the rating-loop skill.
 
-The `rating-loop` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
+The `rating-loop` skill lets your AI agent research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
 
 When run in a loop, together with a suitable InvMon configuration, this skill can drive a simulated trading scenario end to end: the agent rates, InvMon turns the ratings into delta orders, and the simulation executes them at current prices. The setup below explains the necessary configuration for an automated, simulated day-trading scenario.
 
@@ -17,7 +17,7 @@ When run in a loop, together with a suitable InvMon configuration, this skill ca
 
 - InvMon running on a paid plan — the MCP server and the portfolio settings below need one, and any paid plan includes them.
 - Interactive Brokers TWS running and connected to your IB account. Nothing is ever sent to IB in this setup, but the live quotes from that connection are what the close policies and trading gates act on, and the candidate scanners are IB market scanners.
-- Claude Code with this repository (`InvMon.agent`) as the working directory. The bundled `.mcp.json` expects the MCP server on port `55206` — keep the port below in sync, or adjust `.mcp.json`.
+- An AI agent with web search — Claude Code, Codex CLI or Gemini CLI, set up as described in the [README](../../README.md#agent-set-up) — started with this repository (`InvMon.agent`) as the working directory. The bundled agent configs expect the MCP server on port `55206` — keep the port below in sync, or adjust the configs.
 
 ## 1. Create the portfolio group
 
@@ -28,7 +28,7 @@ Create a new portfolio group for the agent to work in.
 Options worth noting:
 
 - **Simulation** — all trades in this group are simulated. Leave this on: the skill is meant for simulated portfolios only, several of the settings below only appear for a simulation group, and it is why no order can ever reach your broker.
-- **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match `.mcp.json`).
+- **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match the bundled agent configs).
 
 What makes the agent's ratings actually *do* something — drive target weights, open and close positions — is a portfolio setting, **Auto-Apply Ratings/Sentiment in Simulation Mode**, configured in step 3.
 
@@ -113,7 +113,7 @@ Both scan US *Listed/NASDAQ* corporate stocks by **Top %**, filtered to liquid n
 
 ## 5. Run the agent
 
-With TWS connected and InvMon running:
+With TWS connected and InvMon running, start your agent in this repository. This tutorial uses Claude Code; for Codex CLI or Gemini CLI, see how to run a skill in the [README](../../README.md#agent-set-up).
 
 ```
 cd InvMon.agent
@@ -126,7 +126,7 @@ Then run the skill once:
 /rating-loop
 ```
 
-or in a loop during market hours:
+or re-run it every hour during market hours:
 
 ```
 /loop 1h /rating-loop

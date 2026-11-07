@@ -29,7 +29,7 @@ Make a new portfolio group *just for scanning*. In the Portfolios panel, add a n
 
 ![Add a Portfolio Group](assets/010-add-portfolio-group.png)
 
-- **Enable MCP Server** on port `55206` — this is the little local connection your AI assistant talks to. Keep the port matching the one in this repo's `.mcp.json`.
+- **Enable MCP Server** on port `55206` — this is the little local connection your AI assistant talks to. Keep the port matching the one in this repo's agent configs (see the [README](../../README.md#agent-set-up)).
 - **Simulation** — optional. Since the scan only records ratings and never trades, you don't need it; turn it on if you'd simply rather keep the whole group sandboxed.
 
 
@@ -86,7 +86,7 @@ Set it up as a **US decliners** screen:
 
 ## 5. Run the scan
 
-With TWS connected and InvMon running, open this repo in your AI assistant. This tutorial uses Claude Code, which this repository is already set up for:
+With TWS connected and InvMon running, open this repo in your AI assistant. This tutorial uses Claude Code; Codex CLI and Gemini CLI are set up too — see how to run a skill with them in the [README](../../README.md#agent-set-up).
 
 ```
 cd InvMon.agent

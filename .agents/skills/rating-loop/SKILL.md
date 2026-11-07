@@ -2,7 +2,7 @@
 name: rating-loop
 description: Use the invmon-mcp MCP server to list a set of instruments, research
   each one, and submit a rating (optionally with a price target) back to InvMon
-  to inform rebalancing. Built to be re-run on a schedule (/loop) through the
+  to inform rebalancing. Built to be re-run on a schedule through the
   trading day; for a single on-demand pass over one portfolio use
   `portfolio-rating` instead. For portfolio groups in simulation mode only.
 ---
@@ -145,7 +145,7 @@ Optional. The user can pass:
 1. **List.** Call `list_instruments` to get the list of instruments to analyze.
 
 2. **Pull price context.** For the instruments that are returned, fetch
-`get_price_history` (in parallel via sub-agents is fine). Read trend,
+`get_price_history` (in parallel, via sub-agents if your agent has them). Read trend,
 volatility, recent reversal patterns. By requesting a price history with a
 period of less than 1 week, e.g. 1d up to 5d, you'll get price quotes that are
 only minutes old or fresher. This is the cheapest signal you have - use it
@@ -156,9 +156,10 @@ freshness check, and if a sub-week `period` returns an `intervalSizeMs` of
 86_400_000 (24h) or more, the data was downgraded to EOD bars and does not
 satisfy the freshness requirement.
 
-3. **Research.** Fan out sub-agents to do an in-depth analysis of each
-instrument. Do focused web research on earnings, news, sector context,
-fundamentals, reason for recent change, etc. Treat the price history from the
+3. **Research.** Do an in-depth analysis of each instrument - fanned out to
+sub-agents if your agent has them, one after the other otherwise. Do focused
+web research on earnings, news, sector context, fundamentals, reason for recent
+change, etc. Treat the price history from the
 previous step as the ground truth and the news as the explanation.
 
 4. **Rate.** Rate every instrument based on your research.
@@ -193,17 +194,19 @@ This skill may be invoked repeatedly. Persistent fields you can read back via
 audience too - terse, factual, no internal monologue.
 
 
-## Running this skill in a loop
+## Running this skill on a schedule
 
-If you have been invoked as part of a /loop (Cron), you can stop the loop once
-the US trading day ends.
+This skill is built to be re-run through the trading day - by your agent's own
+scheduler (e.g. `/loop` in Claude Code) or by an external one that starts the
+agent non-interactively. Once the US trading day has ended, don't start a new
+pass: say so in the summary, and stop the schedule if your agent lets you.
 
-This skill uses the InvMon MCP server over localhost, so it can only run in a
-**local** session (remote execution not supported) - always run it in the
-current session.
+This skill talks to the InvMon MCP server on `localhost`, so your agent must
+run on the same computer as InvMon - a cloud or remote agent session can't reach
+it.
 
 **Requirements:** a paid InvMon plan, the MCP server enabled on the portfolio
-group (*Enable MCP Server* in the group's *MCP Server Options*), and a portfolio
-group in simulation mode. If the `invmon-mcp` tools are missing, the MCP server
-is the first thing to check.
+group (*Enable MCP Server* in the group's *MCP Server Options*), a portfolio
+group in simulation mode, and web search enabled in your agent. If the
+`invmon-mcp` tools are missing, the MCP server is the first thing to check.
 
