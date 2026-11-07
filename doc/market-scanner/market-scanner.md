@@ -10,7 +10,7 @@ In this walkthrough we go hunting for the **5 weakest names** in the US market �
 
 ## What you need
 
-- A **paid InvMon plan** — the market scanner comes with any paid plan.
+- A **paid InvMon plan** — the market scanner and the MCP server come with any paid plan.
 - An **Interactive Brokers account**, with TWS running and connected. Scanning is IB-only; other data providers can't do it.
 - A **portfolio in InvMon with an empty watchlist, connected to your IB account** — plus a handful of settings we'll walk through. This one portfolio is what the scan runs against.
 
@@ -134,7 +134,7 @@ Most hiccups are a setup step that isn't quite right, and the scan usually tells
 | `A scanner run is already in progress for this portfolio.` | A scan (manual or from a previous call) is still running. | Wait for it to finish, then re-run. |
 | `Portfolio not found; specify portfolioId or portfolioName…` | The group holds more than one portfolio. | Name the portfolio when you start the skill, or keep the group to one. |
 | `Scanner timed out after 60 seconds.` | IB didn't answer in time. | Usually a blip — check the TWS connection and re-run. |
-| `This tool call is currently limited to the watchlist pool.` | On your plan the set-aside tools only touch watchlist names. | Expected — the scan only ever touches the watchlist. If you see it, something aimed the tools elsewhere. |
+| `This tool call is currently limited to the watchlist pool.` | The set-aside tools only touch watchlist names. | Expected — the scan only ever touches the watchlist. If you see it, something aimed the tools elsewhere. |
 | Bands come back empty that shouldn't | Either a price filter got baked into the saved scan, or those names were cleared earlier this session. | Remove the base price filter (step 4). For the second cause, see below. |
 
 **Why a second run in the same session finds less.** Once the scanner clears a name out during a run, InvMon keeps it out for the rest of the session so a later band won't waste time re-rating something already dropped. Within one run that's exactly what you want. Across two runs it means the second one is working from a thinner universe — so **restart InvMon before a fresh scan**, or bring individual names back via *Restore Hidden Instrument…* (in the Delete menu).

@@ -140,3 +140,7 @@ not the US session by default.
 This skill uses the InvMon MCP server over localhost, so it can only run in a
 **local** session (remote execution not supported) - always run it in the current
 session.
+
+**Requirements:** a paid InvMon plan and the MCP server enabled on the portfolio
+group (*Enable MCP Server* in the group's *MCP Server Options*). If the
+`invmon-mcp` tools are missing, the MCP server is the first thing to check.

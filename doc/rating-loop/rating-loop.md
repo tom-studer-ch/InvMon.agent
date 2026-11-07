@@ -2,6 +2,8 @@
 
 > **Disclaimer:** This tutorial and the `rating-loop` skill it describes are provided only as an example. They must not be used for real investment decisions — the ratings and price targets the skill produces are not investment advice.
 
+> **Simulated portfolios only.** The `rating-loop` skill and this tutorial are meant to run on a portfolio group in **simulation mode**. Don't point the skill at a portfolio group that trades a real account.
+
 This tutorial explains a possible scenario for using the rating-loop skill.
 
 The `rating-loop` skill lets Claude research the instruments of an InvMon portfolio group and submit a rating (optionally with a price target) for each one via InvMon's built-in MCP server. 
@@ -13,7 +15,7 @@ When run in a loop, together with a suitable InvMon configuration, this skill ca
 
 ## Prerequisites
 
-- InvMon running on a paid plan — the MCP server and the portfolio settings below need one.
+- InvMon running on a paid plan — the MCP server and the portfolio settings below need one, and any paid plan includes them.
 - Interactive Brokers TWS running and connected to your IB account. Nothing is ever sent to IB in this setup, but the live quotes from that connection are what the close policies and trading gates act on, and the candidate scanners are IB market scanners.
 - Claude Code with this repository (`InvMon.agent`) as the working directory. The bundled `.mcp.json` expects the MCP server on port `55206` — keep the port below in sync, or adjust `.mcp.json`.
 
@@ -25,7 +27,7 @@ Create a new portfolio group for the agent to work in.
 
 Options worth noting:
 
-- **Simulation** — all trades in this group are simulated. Leave this on: it is what makes the rest of this setup available without a live-trading plan, and it is why no order can ever reach your broker.
+- **Simulation** — all trades in this group are simulated. Leave this on: the skill is meant for simulated portfolios only, several of the settings below only appear for a simulation group, and it is why no order can ever reach your broker.
 - **Enable MCP Server** on port `55206` — this is the server the agent connects to (must match `.mcp.json`).
 
 What makes the agent's ratings actually *do* something — drive target weights, open and close positions — is a portfolio setting, **Auto-Apply Ratings/Sentiment in Simulation Mode**, configured in step 3.

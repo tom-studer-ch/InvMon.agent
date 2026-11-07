@@ -6,7 +6,7 @@ description: Use the invmon-mcp MCP server to sweep a large securities universe 
   been identified - then expose the winners in the watchlist. The rating (or ratings)
   that make an instrument a winner can be passed as an argument; by default a winner is
   rated `Strong Buy` or `Buy`. One-shot; not meant to be driven in a loop.
-  (In-house; not public. Requires market-scanner access.)
+  Requires a paid InvMon plan and a connected Interactive Brokers account.
 ---
 
 
@@ -43,9 +43,11 @@ This skill drives a **dedicated portfolio** set up as follows. If a
 `run_scanner` call errors, re-read this list — the errors point straight at a
 missing prerequisite.
 
-- **A license with market-scanner access** (any paid plan) — the MCP server
-    exposes `run_scanner` and the hide / un-hide / archive tools only when the
-    license includes scanner access.
+- **A paid InvMon plan** — it includes the MCP server and market-scanner
+    access. The MCP server exposes `run_scanner` and the hide / un-hide /
+    archive tools only when the plan includes scanner access.
+- **The MCP server enabled** on the portfolio group (*Enable MCP Server* in the
+    group's *MCP Server Options*).
 - **An IB account, connected** — the sweep runs IB market scans; other providers
     do not support scanning.
 - **Watchlist market scanner configured** (in the portfolio's scanner
@@ -119,10 +121,11 @@ New for this skill:
   cleanup to drop the last band's non-winners. An instrument holding a position
   is refused (reported as an error). Same per-id shape.
 
-Depending on the license, `hide_instruments`, `unhide_instruments` and
-`archive_instruments` may accept watchlist-pool instruments only. The sweep
-never touches anything else, so this does not constrain the skill — but it
-explains the refusal if you ever point those tools elsewhere.
+`hide_instruments`, `unhide_instruments` and `archive_instruments` may refuse
+instruments outside the watchlist pool (`This tool call is currently limited to
+the watchlist pool.`). The sweep never touches anything else, so this does not
+constrain the skill — but it explains the refusal if you ever point those tools
+elsewhere.
 
 
 ## Arguments

@@ -4,7 +4,7 @@ description: Use the invmon-mcp MCP server to list a set of instruments, researc
   each one, and submit a rating (optionally with a price target) back to InvMon
   to inform rebalancing. Built to be re-run on a schedule (/loop) through the
   trading day; for a single on-demand pass over one portfolio use
-  `portfolio-rating` instead. (In-house; not public.)
+  `portfolio-rating` instead. For portfolio groups in simulation mode only.
 ---
 
 # Research and rate instruments
@@ -13,13 +13,21 @@ description: Use the invmon-mcp MCP server to list a set of instruments, researc
 > for real investment decisions - the ratings and price targets it produces are
 > not investment advice.
 
+> **Simulated portfolios only.** This skill is meant to run against an InvMon
+> portfolio group in **simulation mode** (the set-up is described in the
+> tutorial `doc/rating-loop/rating-loop.md`). The MCP server does not report
+> whether a group is simulated, so this is the user's responsibility. If the
+> user tells you, or you otherwise learn, that the group is not a simulation,
+> stop without submitting any ratings and say so.
+
 You are a seasoned financial analyst. For an InvMon portfolio (or all portfolios
 in a portfolio group), produce a near-term rating per instrument, optionally
 with a price target, and submit your ratings via the MCP server.
 
-Your ratings are not binding - they inform the user's rebalancing decisions. A
-`Neutral` rating is a perfectly valid answer when you're unsure, and almost
-always preferable to a low-conviction directional call.
+Your ratings are not investment advice. Depending on the group's settings they
+are recorded for the user to review, or they drive the group's simulated
+rebalancing. A `Neutral` rating is a perfectly valid answer when you're unsure,
+and almost always preferable to a low-conviction directional call.
 
 Some or all instruments may have experienced a big recent change in price or
 volume - take possible near-term effects of this into consideration.
@@ -193,4 +201,9 @@ the US trading day ends.
 This skill uses the InvMon MCP server over localhost, so it can only run in a
 **local** session (remote execution not supported) - always run it in the
 current session.
+
+**Requirements:** a paid InvMon plan, the MCP server enabled on the portfolio
+group (*Enable MCP Server* in the group's *MCP Server Options*), and a portfolio
+group in simulation mode. If the `invmon-mcp` tools are missing, the MCP server
+is the first thing to check.
 

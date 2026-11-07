@@ -155,6 +155,10 @@ This skill uses the InvMon MCP server over localhost, so it can only run in a
 **local** session (remote execution not supported) - always run it in the current
 session.
 
+**Requirements:** a paid InvMon plan and the MCP server enabled on the portfolio
+group (*Enable MCP Server* in the group's *MCP Server Options*). If the
+`invmon-mcp` tools are missing, the MCP server is the first thing to check.
+
 It is a **one-shot read**: it records the sentiment once and exits. To keep a
 portfolio's sentiment current through the trading day, use `sentiment-loop` under
 `/loop` instead of driving this skill repeatedly.
