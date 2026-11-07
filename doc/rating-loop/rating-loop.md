@@ -58,7 +58,7 @@ Setting the Default Chart Range (left) to **5 days (15 min resolution)** gives t
 
 **Enable Short Orders** is required for the `Short` portfolio to work. **Move to Watchlist** will move closed instruments to the watchlist (instead of the candidates list). As a consequence, a once-closed position of an instrument will not be re-opened.
 
-**Defensive Picking** is on (it is off by default). It only bites at the sentiment extremes — no short can be opened while the portfolio sentiment is *Very Bullish*, no long while it is *Very Bearish* — so at the *Neutral* sentiment from step 2 it changes nothing. It becomes relevant if you also run `sentiment-loop` against this group, which is what moves the sentiment.
+**Defensive Picking** is on (it is off by default). It only bites at the sentiment extremes — no short can be opened while the portfolio sentiment is *Very Bullish*, no long while it is *Very Bearish* — so at the *Neutral* sentiment from step 2 it changes nothing. It becomes relevant once something moves the sentiment, e.g. the `portfolio-sentiment` skill, run once or re-run hourly with `/loop 1h /portfolio-sentiment`.
 
 **Enable Rebalancing Orders** is off - we only buy and sell full positions; we don't rebalance/adjust open positions. **Trade on Adjust Ratings** is off. Buy/adjust is too weak a signal (or so we assume). **Force Trade on Strong Ratings** must be off. If it were on, InvMon would trade any Strong Buy or Strong Sell rating, even if all portfolio target slots are already filled. 
 

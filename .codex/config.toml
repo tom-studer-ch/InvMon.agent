@@ -1,5 +1,6 @@
 # Codex CLI project config. Codex reads it only once you trust this project (it asks on first start).
-# Keep the port in sync with the MCP server port of your InvMon portfolio group (and with .mcp.json / .gemini/settings.json).
+# Codex does not expand environment variables in this file. For a portfolio group whose MCP server uses a port other than 55206,
+# edit the URL below, or pass it on start: codex -c 'mcp_servers.invmon-mcp.url="http://localhost:<port>/mcp"'
 
 # The skills research current news; "live" fetches pages instead of serving them from a cache.
 web_search = "live"

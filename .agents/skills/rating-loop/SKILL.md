@@ -5,6 +5,10 @@ description: Use the invmon-mcp MCP server to list a set of instruments, researc
   to inform rebalancing. Built to be re-run on a schedule through the
   trading day; for a single on-demand pass over one portfolio use
   `portfolio-rating` instead. For portfolio groups in simulation mode only.
+metadata:
+  invmon-context: "portfolio-group portfolio"
+  invmon-loop-interval: "1h"
+  invmon-requires: "simulation"
 ---
 
 # Research and rate instruments
@@ -134,7 +138,10 @@ Optional. The user can pass:
 
 - A portfolio name - passed straight through to
   `list_instruments(portfolioName=...)`. Names are unique within the server's
-  portfolio group, so no further qualification is needed.
+  portfolio group, so no further qualification is needed. When InvMon starts you,
+  the portfolio comes as `portfolio "<name>" (id <id>)`: call
+  `list_instruments(portfolioId=<id>)` instead (see *Arguments from InvMon* in
+  `AGENTS.md`).
 - Nothing - call `list_instruments` with no arguments to analyze all available
   instruments across the portfolio group. This is currently the preferred mode
   of operation.

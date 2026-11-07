@@ -7,6 +7,10 @@ description: Use the invmon-mcp MCP server to sweep a large securities universe 
   that make an instrument a winner can be passed as an argument; by default a winner is
   rated `Strong Buy` or `Buy`. One-shot; not meant to be driven in a loop.
   Requires a paid InvMon plan and a connected Interactive Brokers account.
+metadata:
+  invmon-context: "portfolio"
+  invmon-requires: "ib-connection"
+  invmon-arguments: "How many names to find (default 10), which ratings count (default Strong Buy and Buy), price range and band width (default $5 to $100 in $5 bands)."
 ---
 
 
@@ -147,7 +151,9 @@ The user can pass (all optional; defaults below):
   the configured watchlist scanner count.
 
 If the user names a portfolio, pass it through to `run_scanner`; otherwise rely
-on the single-portfolio default.
+on the single-portfolio default. When InvMon starts you, the portfolio comes as
+`portfolio "<name>" (id <id>)`: pass `portfolioId=<id>` (see *Arguments from
+InvMon* in `AGENTS.md`).
 
 
 ## Workflow

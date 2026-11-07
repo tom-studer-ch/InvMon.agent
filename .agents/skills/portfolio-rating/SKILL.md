@@ -4,6 +4,9 @@ description: Use the invmon-mcp MCP server to do a single, on-demand rating pass
   the instruments of one InvMon portfolio - research each one, submit a rating
   (optionally with a price target) back to InvMon, and print a summary. One-shot; for
   a reading that is kept fresh through the trading day use `rating-loop` instead.
+metadata:
+  invmon-context: "portfolio"
+  invmon-arguments: "A pool: positions, candidates or watchlist. Default: positions and candidates."
 ---
 
 # Rate the instruments of one portfolio (one-shot)
@@ -99,9 +102,12 @@ is the display label for the same value (`Buy/adjust` reads back as `Buy Adjust`
 
 ## Arguments
 
-- **A portfolio name** - the portfolio to rate. Passed straight through to
+- **A portfolio** - the portfolio to rate. A name is passed straight through to
   `list_instruments(portfolioName=...)`; names are unique within the server's
-  portfolio group, so no further qualification is needed.
+  portfolio group, so no further qualification is needed. When InvMon starts you,
+  the portfolio comes as `portfolio "<name>" (id <id>)`: call
+  `list_instruments(portfolioId=<id>)` instead (see *Arguments from InvMon* in
+  `AGENTS.md`).
 - **Nothing** - call `list_portfolios()`. If the group holds exactly one portfolio,
   rate that one. If it holds several, **ask the user which one** before doing any
   research - this skill rates one portfolio, and guessing wastes a full research

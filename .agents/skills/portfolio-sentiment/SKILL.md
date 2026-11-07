@@ -3,8 +3,11 @@ name: portfolio-sentiment
 description: Work out which market an InvMon portfolio actually trades against, research
   that market's current sentiment (Very Bearish, Bearish, Neutral, Bullish, Very
   Bullish) on the web, and record it on the portfolio via the set_sentiment MCP tool.
-  One-shot; for a reading kept fresh through the trading day use `sentiment-loop`
-  instead.
+  One-shot; re-run it on a schedule to keep the reading fresh through the trading
+  day.
+metadata:
+  invmon-context: "portfolio-group portfolio"
+  invmon-arguments: "A market to read instead of the one derived from the holdings, e.g. NASDAQ."
 ---
 
 # Read the sentiment of the market a portfolio trades against (one-shot)
@@ -18,10 +21,8 @@ market it is actually exposed to, research that market's current sentiment, clas
 it on the five-point analyst scale, and record it on that portfolio via
 `set_sentiment`.
 
-The difference from `sentiment-loop` is where the market comes from: there it is an
-argument (defaulting to the broad US market); here you **derive it from what the
-portfolio holds**. Everything downstream - the signals, the scale, the write - is the
-same.
+The market is not given to you: you **derive it from what the portfolio holds**,
+unless the user names one (see *Arguments*).
 
 This is a single pass, so it can be a proper read rather than a snapshot: look at the
 portfolio's actual exposure, not just the headline index.
@@ -68,8 +69,11 @@ doesn't lean.
 
 All optional. The user can pass:
 
-- **A portfolio name** - the portfolio to read and write. Names are unique within the
-  server's portfolio group.
+- **A portfolio** - the portfolio to read and write. Names are unique within the
+  server's portfolio group; pass a name as `portfolioName`. When InvMon starts you,
+  the portfolio comes as `portfolio "<name>" (id <id>)`: pass `portfolioId=<id>` to
+  both `list_instruments` and `set_sentiment` instead (see *Arguments from InvMon* in
+  `AGENTS.md`).
 - **Nothing** - call `list_portfolios()`. One portfolio in the group: use it. Several:
   read and record each one in turn (they may well sit in different markets), and
   report them separately. If the user prefers a single portfolio, they will say so.
@@ -161,5 +165,6 @@ enabled in your agent. If the `invmon-mcp` tools are missing, the MCP server is
 the first thing to check.
 
 It is a **one-shot read**: it records the sentiment once and exits. To keep a
-portfolio's sentiment current through the trading day, re-run `sentiment-loop` on
-a schedule instead of driving this skill repeatedly.
+portfolio's sentiment current through the trading day, re-run it on a schedule -
+in Claude Code e.g. `/loop 1h /portfolio-sentiment`. Each run derives the market
+again, so hourly is a sensible pace.

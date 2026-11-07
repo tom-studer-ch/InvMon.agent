@@ -4,7 +4,7 @@
   },
   "mcpServers": {
     "invmon-mcp": {
-      "httpUrl": "http://localhost:55206/mcp"
+      "httpUrl": "${INVMON_MCP_URL:-http://localhost:55206/mcp}"
     }
   }
 }

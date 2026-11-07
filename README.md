@@ -14,7 +14,6 @@ Skills whose name ends in `-loop` are built to be **re-run on a schedule** throu
 | Skill | Kind | What it does |
 |---|---|---|
 | `rating-loop` | loop | Researches the instruments of a portfolio group and submits a rating (optionally with a price target) for each, keeping the ratings current through the session. **For simulated portfolio groups only.** |
-| `sentiment-loop` | loop | Reads the current sentiment of a market and reports it to InvMon. Takes an optional market argument; without one it reads the broad US market. |
 | `portfolio-rating` | one-shot | A single, deeper rating pass over the instruments of one portfolio. |
 | `portfolio-sentiment` | one-shot | Derives the market a portfolio actually trades against from its holdings, reads that market's sentiment, and records it on the portfolio. |
 | `market-scanner` | one-shot | Sweeps a whole market in price-banded batches through InvMon's IB market scanner, rating each batch, until it has collected N names matching the rating you asked for. |
@@ -26,7 +25,7 @@ Every skill in this repository is available to anyone with a **paid InvMon plan*
 
 | Skill | Also needs |
 |---|---|
-| all | The MCP server enabled on the portfolio group the skill works on: *Enable MCP Server* in the group's *MCP Server Options*, on port `55206` (the port the bundled agent configs use). |
+| all | The MCP server enabled on the portfolio group the skill works on: *Enable MCP Server* in the group's *MCP Server Options*, on port `55206` by default (for another port, see *Changing the port* below). |
 | all | An agent with web search, running on the same computer as InvMon. The MCP server only listens on `localhost`, so cloud or remote agent sessions can't reach it. |
 | `rating-loop` | A portfolio group in **simulation mode**. The skill and its tutorial are meant to run on simulated portfolios only; the tutorial walks through the set-up. |
 | `market-scanner` | An Interactive Brokers account, with TWS running and connected. Market scanning is IB-only. |
@@ -48,7 +47,7 @@ Arguments go after the skill name, in plain language: `/market-scanner find 5 na
 
 **Re-running without a built-in loop.** Codex CLI and Gemini CLI have no interval command. Start them non-interactively from a scheduler (cron, launchd, Windows Task Scheduler), e.g. `codex exec "Run the rating-loop skill"` or `gemini -p "Run the rating-loop skill"`. An unattended run can't answer approval prompts, so allow the `invmon-mcp` tools first; how that works depends on your agent, see its documentation on MCP tool approvals.
 
-**Changing the port.** If your portfolio group's MCP server uses a port other than `55206`, change it in all three configs: `.mcp.json`, `.codex/config.toml` and `.gemini/settings.json`.
+**Changing the port.** If your portfolio group's MCP server uses a port other than `55206`, set the environment variable `INVMON_MCP_URL` before you start Claude Code or Gemini CLI, e.g. `export INVMON_MCP_URL=http://localhost:55207/mcp` (PowerShell: `$env:INVMON_MCP_URL = "http://localhost:55207/mcp"`). Codex CLI doesn't read environment variables in its config: change the URL in `.codex/config.toml`, or pass it on start with `codex -c 'mcp_servers.invmon-mcp.url="http://localhost:55207/mcp"'`.
 
 **Windows and Claude Code.** The entries in `.claude/skills/` are symbolic links to `.agents/skills/`. A zip download, or a git clone without symlink support, turns them into small text files and Claude Code finds no skills. Replace them with copies, from the repository folder in PowerShell:
 
