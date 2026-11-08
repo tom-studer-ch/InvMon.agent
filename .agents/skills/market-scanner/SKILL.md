@@ -8,6 +8,7 @@ description: Use the invmon-mcp MCP server to sweep a large securities universe 
   rated `Strong Buy` or `Buy`. One-shot; not meant to be driven in a loop.
   Requires a paid InvMon plan and a connected Interactive Brokers account.
 metadata:
+  invmon-summary: "Scans a wide market in price bands for instruments that earn a given rating and puts them on the watchlist."
   invmon-context: "portfolio"
   invmon-requires: "ib-connection"
   invmon-arguments: "How many names to find (default 10), which ratings count (default Strong Buy and Buy), price range and band width (default $5 to $100 in $5 bands)."

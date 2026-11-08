@@ -6,6 +6,7 @@ description: Use the invmon-mcp MCP server to list a set of instruments, researc
   trading day; for a single on-demand pass over one portfolio use
   `portfolio-rating` instead. For portfolio groups in simulation mode only.
 metadata:
+  invmon-summary: "Rates the instruments of the group, or of one portfolio, and is built to repeat through the trading day. Simulation groups only."
   invmon-context: "portfolio-group portfolio"
   invmon-loop-interval: "1h"
   invmon-requires: "simulation"

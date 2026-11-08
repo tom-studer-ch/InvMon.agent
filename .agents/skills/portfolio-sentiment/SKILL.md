@@ -6,6 +6,7 @@ description: Work out which market an InvMon portfolio actually trades against, 
   One-shot; re-run it on a schedule to keep the reading fresh through the trading
   day.
 metadata:
+  invmon-summary: "Works out the market a portfolio trades against and records that market's current sentiment."
   invmon-context: "portfolio-group portfolio"
   invmon-arguments: "A market to read instead of the one derived from the holdings, e.g. NASDAQ."
 ---

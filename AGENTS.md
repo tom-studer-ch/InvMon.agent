@@ -37,6 +37,8 @@ followed by the user's own instructions after a semicolon:
 - The server is up only while InvMon is running and *Enable MCP Server* is on for the portfolio group. If its tools are missing, tell the
   user to check exactly that; don't work around it.
 - Use only the MCP tools a skill names, and only as the skill describes. Never change InvMon data by any other route.
+- A tool call answered with "This agent run was stopped in InvMon." means the user stopped you in InvMon. Stop at once: don't retry,
+  don't call other tools, and if you are repeating a run, stop repeating it. Tell the user that InvMon stopped the run.
 
 ## Ground rules
 

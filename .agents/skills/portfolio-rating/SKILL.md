@@ -5,6 +5,7 @@ description: Use the invmon-mcp MCP server to do a single, on-demand rating pass
   (optionally with a price target) back to InvMon, and print a summary. One-shot; for
   a reading that is kept fresh through the trading day use `rating-loop` instead.
 metadata:
+  invmon-summary: "Rates the instruments of one portfolio once, researching each of them."
   invmon-context: "portfolio"
   invmon-arguments: "A pool: positions, candidates or watchlist. Default: positions and candidates."
 ---
