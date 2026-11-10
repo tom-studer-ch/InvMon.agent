@@ -11,232 +11,79 @@ metadata:
   invmon-summary: "Scans a wide market in price bands for instruments that earn a given rating and puts them on the watchlist."
   invmon-context: "portfolio"
   invmon-requires: "ib-connection"
+  invmon-reads: "rating-horizon"
   invmon-arguments: "How many names to find (default 10), which ratings count (default Strong Buy and Buy), price range and band width (default $5 to $100 in $5 bands)."
 ---
 
+# Scan a market for N names with a given rating
 
-# Scan and rate a large universe to find N buy-or-better names
+> **Disclaimer:** This skill is an example. Its ratings and price targets are not investment advice.
 
-> **Disclaimer:** This skill is provided only as an example. It must not be used
-> for real investment decisions - the ratings and price targets it produces are
-> not investment advice.
+You are a seasoned financial analyst running a screening sweep. InvMon's IB market scanner returns only the top rows of one ranked
+query and can't be paged. To look beyond that slice, you split the universe along the price axis into disjoint bands `[lo, hi)` and
+scan each band as one batch. You rate every batch, hide the winners to set them aside, and go on to the next band until you have **N**
+winners. Then you clean up and un-hide the winners, so that they show in the watchlist.
 
-You are a seasoned financial analyst running a *screening sweep*. InvMon's IB
-market scanner interface returns only the top rows of a single ranked query and
-cannot be paged. To look beyond that top slice you partition the universe along
-the **price axis** into disjoint bands and scan each band as its own batch. You
-rate every batch (as `rating-loop` does), **hide** the winners to set them
-aside, and move to the next band — until you have collected **N** winners. Then
-you clean up and un-hide the winners so they show up in the watchlist.
+Rate every instrument by the method in `../instrument-rating/references/method.md`: read it before the first batch, and rate for the
+portfolio's horizon (`ratingHorizon`, `ratingRange` from `list_portfolios`). This is a screening pass: no positions are opened.
 
-Throughout: a **band** is a price interval `[lo, hi)`; a **batch** is the set of
-instruments one `run_scanner` call returns for that band. Number of bands and
-batch size are the two axes of the sweep.
+Tools: `list_portfolios`, `run_scanner`, `get_price_history`, `update_ratings`, `hide_instruments`, `unhide_instruments`,
+`archive_instruments`. Their descriptions say what they take and return. `run_scanner` returns the batch inline: you don't need
+`list_instruments` during the sweep.
 
-Ratings are not binding — they inform the human. `Neutral` is a valid answer,
-and almost always preferable to a low-conviction directional call. This is a
-*screening* pass: no positions are opened.
+## Prerequisites
 
-The rated universe per run is roughly `batch size × number of bands`. This is a
-ranked skim of each band, not exhaustive coverage — that is expected and fine
-for "find N good ones among the top movers".
+The user sets these up once, in InvMon, on a dedicated portfolio. When `run_scanner` returns an error, it points at one of them.
 
-
-## Prerequisites (the user configures these once, in InvMon)
-
-This skill drives a **dedicated portfolio** set up as follows. If a
-`run_scanner` call errors, re-read this list — the errors point straight at a
-missing prerequisite.
-
-- **A paid InvMon plan** — it includes the MCP server and market-scanner
-    access. The MCP server exposes `run_scanner` and the hide / un-hide /
-    archive tools only when the plan includes scanner access.
-- **The MCP server enabled** on the portfolio group (*Enable MCP Server* in the
-    group's *MCP Server Options*).
-- **Web search enabled in your agent** — every batch is researched on the web.
-- **An IB account, connected** — the sweep runs IB market scans; other providers
-    do not support scanning.
-- **Watchlist market scanner configured** (in the portfolio's scanner
-    settings): the base query the sweep builds on — scan code
-    (e.g. *Top % Gainers*), location (e.g. NASDAQ / `STK.US.MAJOR`), and base
-    filters such as a minimum daily-dollar-volume floor. Your price band is
-    layered on top of this per batch.
-- **Watchlist replace mode ON** — each new band trims the previous band's
-    non-hidden names down to the pool's target size; hidden winners survive.
-- **"Trigger Scanner" OFF** — otherwise a later
-    `list_instruments` call would re-scan with the base config and clobber your
-    batch. `run_scanner` refuses to run while this is on.
-- **Watchlist scanner count ≈ your batch size** (e.g. 40, or less if TWS
-    market-data lines are tight — every visible watchlist name consumes one).
-    This doubles as the size replace mode trims the pool back to. Setting a
-    *List Limit* in the portfolio's MCP options overrides that size and also
-    caps what `list_instruments` returns; leave it empty unless you want the two
-    to differ.
-
-
-## Tools
-
-Reused from `rating-loop` (see that skill for full detail):
-
-- `list_instruments(pool?, portfolioId?, portfolioName?)` — pass `pool: "watchlist"`
-  for the watchlist. Hidden instruments
-  are **excluded**, so your set-aside winners never come back in a listing. You
-  mostly won't need this during the sweep (see below).
-- `get_price_history(instrumentId, period?)` — historical series; a short
-  `period` (`1d`–`5d`) gives a minutes-fresh quote during trading hours. This is
-  your ground-truth signal. See **Quote freshness** below for what to do when
-  this skill runs outside trading hours.
-- `update_ratings(updates)` — submit one or more ratings. Submit **one call per
-  band**, covering that whole batch; unlike `rating-loop` you do not hold
-  ratings back to submit the entire run in a single call.
-
-New for this skill:
-
-- `run_scanner(priceAbove?, priceBelow?, count?, portfolioId?, portfolioName?)`
-  — run the IB scanner into the **watchlist** pool for one batch and **return
-  the resulting visible watchlist inline** (same entry shape as
-  `list_instruments`; hidden names excluded).
-  - `priceAbove` / `priceBelow` set the price band for **this batch only**; they
-    are layered on the saved watchlist scanner config and never written back to
-    it. Pass both to bound a band.
-  - `count` caps the scanner rows. Defaults to the configured watchlist scanner
-    count, or 50 when none is configured.
-  - `portfolioId` / `portfolioName` are optional when the group has exactly one
-    portfolio.
-  - Returns `{pool, priceAbove?, priceBelow?, count, instruments:[...]}`, or an
-    `{error}`: no scanner license, account not connected, the account's provider
-    does not support scanning, "Trigger Scanner" is on, a scan is
-    already running, ambiguous portfolio, or scanner timeout.
-  - **Work the loop off this return** — the `instruments` array *is* your batch.
-    You do not need a separate `list_instruments` call during the sweep.
-
-- `hide_instruments(instrumentIds)` — set instruments aside. A hidden instrument
-  is excluded from InvMon's re-balancing algorithm, survives watchlist
-  replace-mode trimming, and disappears from listings. This is how you preserve
-  winners across bands. An instrument holding a position is refused (reported as
-  an error). Returns one result per id:
-  `{success, instrumentId, symbol}` or `{error, instrumentId}`.
-
-- `unhide_instruments(instrumentIds)` — restore hidden instruments to visible,
-  in place (no move, no repool). Used at cleanup to expose the winners. An
-  un-hidden instrument is detached from scanner rotation, so a later
-  replace-mode scan will not trim away the winners you just exposed. Same
-  per-id result shape.
-
-- `archive_instruments(instrumentIds)` — permanently delete instruments. Used at
-  cleanup to drop the last band's non-winners. An instrument holding a position
-  is refused (reported as an error). Same per-id shape.
-
-`hide_instruments`, `unhide_instruments` and `archive_instruments` may refuse
-instruments outside the watchlist pool (`This tool call is currently limited to
-the watchlist pool.`). The sweep never touches anything else, so this does not
-constrain the skill — but it explains the refusal if you ever point those tools
-elsewhere.
-
+- **A paid InvMon plan** that includes market-scanner access; without it, the scanner tools are missing.
+- **The MCP server enabled** on the portfolio group (*Enable MCP Server* in the group's *MCP Server Options*).
+- **Web search** enabled in your agent.
+- **An IB account, connected.** Other providers don't scan.
+- **The watchlist market scanner configured** in the portfolio's scanner settings: scan code (e.g. *Top % Gainers*), location (e.g.
+  `STK.US.MAJOR`) and base filters such as a minimum daily dollar volume. The sweep adds its price band per batch.
+- **Watchlist replace mode on:** each new band trims the previous band's visible names down to the pool's size; hidden winners stay.
+- **"Trigger Scanner" off.** `run_scanner` refuses to run otherwise.
+- **The watchlist scanner count about the batch size** (e.g. 40, less when TWS market-data lines are tight: each visible watchlist
+  name takes one). A *List Limit* in the portfolio's MCP options overrides it; leave it empty unless the two should differ.
 
 ## Arguments
 
-The user can pass (all optional; defaults below):
+All optional, in the instructions (see *Arguments from InvMon* in `AGENTS.md`); the portfolio comes as the context:
 
-- `N` — how many winners to collect before stopping. Default **10**.
-- **Price sweep schedule** — `priceMin`, `priceMax`, and a band width, or an
-  explicit list of `[lo, hi)` bands. Default: **$5 to $100 in $5-wide bands**
-  (19 bands). The floor keeps penny stocks out. The schedule is a ceiling, not a
-  commitment — the sweep stops as soon as it has `N` winners, so a generous
-  schedule costs nothing. Choose bands so the union covers the intended range
-  with no gaps and no overlaps.
-- **Winning ratings** — which ratings make an instrument a winner. Default:
-  `Strong Buy` and `Buy`. This is a **set, not a threshold**: `Buy/adjust` does
-  *not* count by default. If the user names ratings, use exactly that set.
-- **Batch size** — rows per band, passed to `run_scanner` as `count`. Default:
-  the configured watchlist scanner count.
+- **N**, how many winners to collect. Default 10.
+- **The bands:** a price range and a band width, or a list of `[lo, hi)` bands without gaps or overlaps. Default $5 to $100 in $5
+  bands (19 bands). The floor keeps penny stocks out. The sweep stops at N winners, so a generous schedule costs nothing.
+- **The winning ratings**, a set, not a threshold. Default `Strong Buy` and `Buy`; `Buy/adjust` doesn't count unless named.
+- **The batch size**, passed as `count`. Default: the watchlist scanner count.
 
-If the user names a portfolio, pass it through to `run_scanner`; otherwise rely
-on the single-portfolio default. When InvMon starts you, the portfolio comes as
-`portfolio "<name>" (id <id>)`: pass `portfolioId=<id>` (see *Arguments from
-InvMon* in `AGENTS.md`).
-
+Pass the portfolio to `run_scanner` (`portfolioId`). Without one, `run_scanner` works only in a group with one portfolio.
 
 ## Workflow
 
-1. **Plan the sweep.** From the arguments, form the ordered list of price bands
-   `[lo, hi)` and note `N` and the winning-rating set. The base query (scan
-   code, location, volume floor) is already configured — you only drive the
-   price axis.
+1. **Plan.** `list_portfolios` for the horizon. Form the ordered list of bands, N and the winning set.
+2. **Per band:**
+   1. `run_scanner(priceAbove=lo, priceBelow=hi, count=…)`. No instruments: next band.
+   2. Rate each instrument of the batch by the method (sub-agents if your agent has them). Skip those the method says to skip.
+   3. One `update_ratings` call for the batch.
+   4. Hide the batch's winners (`hide_instruments`), add them to your winners, and keep the band's full id list.
+   5. N winners reached: stop. Otherwise the next band. Don't archive losers in between: replace mode trims them at the next scan.
+3. **Clean up** from the ids you kept, no listing needed: archive the last band's ids minus its winners (the only visible names left,
+   including any you skipped), then un-hide all winners.
+4. **Summarize:** the winners (symbol, rating, price target, one-line reason), the horizon, whether the ratings were applied or only
+   recorded, the bands swept and about how many names rated, the skipped names and why, and the shortfall when the schedule ran out
+   before N.
 
-2. **Per band, populate + rate:**
+## Edge cases
 
-   1. `batch = run_scanner(priceAbove=lo, priceBelow=hi, count=batch_size)`. If
-      `instruments` is empty, move to the next band.
-   2. For each instrument in `batch.instruments`: pull `get_price_history`
-      (short period) and do focused web research (fanned out to sub-agents
-      if your agent has them), exactly as `rating-loop` does. Treat the price history as ground truth and the
-      news as the explanation. Apply the quote-freshness rule below.
-   3. `update_ratings(...)` for the whole batch in one call, with `note` (and
-      `priceTarget` only on high conviction) per entry.
-   4. `winners_this_band` = the batch ids whose rating is in the winning set.
-      Call `hide_instruments(winners_this_band)`. Add them to your running
-      **winners** set, and remember this band's **full id list** for cleanup.
-   5. If `winners` has reached `N`, stop the sweep. Otherwise go to the next
-      band — replace mode trims this band's non-hidden names automatically when
-      the next `run_scanner` runs, so you do **not** archive losers mid-sweep.
-
-3. **Clean up (from your tracked ids — no listing needed).** The only
-   still-visible watchlist names are the **last** band's non-winners (earlier
-   bands' losers were already trimmed by replace mode). Compute them as *last
-   band's id list − its winners* (this also sweeps up any you skipped or left
-   unrated) and `archive_instruments(...)` them. Then call
-   `unhide_instruments(winners)` to expose the collected winners.
-
-4. **Summarize.** Print the winners (symbol + one-line rationale, and price
-   target where you set one), how many bands you swept, roughly how many names
-   you rated, and — if you exhausted the schedule before reaching `N` — the
-   shortfall and how far the sweep got.
-
-
-### Quote freshness
-
-**During trading hours**, require a fresh quote. A `period` of `1d`–`5d` should
-come back with intraday bars; skip the instrument if the newest bar is not
-minutes-fresh, or if a sub-week `period` returns `intervalSizeMs` >= 86400000
-(the data was downgraded to end-of-day bars and does not satisfy the freshness
-requirement).
-
-**Outside trading hours**, stale data is expected and acceptable — the series
-will typically end at the previous trading day's close. Rate on it. This is
-where the skill deliberately differs from `rating-loop`, which skips stale
-instruments unconditionally. Skip an instrument here only when it has no usable
-price history at all.
-
-
-## Notes, edge cases, and pitfalls
-
-- **Empty band** — some price bands (especially the extremes) return nothing.
-    Skip and continue.
-- **Schedule exhausted before N** — stop and report the shortfall honestly; do
-    not widen the winning-rating set to manufacture winners.
-- **Why bands, not a bigger `count`** — the IB scanner caps out at roughly 50
-    rows per query. That cap, not a market-data-line limit, is what the
-    price-band sweep works around; raising `count` past it does not get you more
-    names.
-- **Session trim-lockout is sticky (and intended).** Once replace mode trims a
-    name it is locked out for the rest of the app session, so you won't waste a
-    later band re-rating it. This persists until the InvMon app is restarted —
-    a fresh sweep in the same session won't re-see trimmed names.
-- **Price drift across a boundary** — a name whose price moves across a band
-    edge mid-run may appear in two adjacent bands or none. In-portfolio dedup
-    and the trim-lockout absorb this; don't special-case it.
-- **License instrument cap** — you create scanner instruments as you sweep, but
-    each band's losers are trimmed (deleted) automatically, so the live count
-    stays ≈ batch size + collected winners.
-- **Freshness** — quotes come from `get_price_history` (on-demand history), not
-    a live stream. See **Quote freshness** above.
-
+- **Empty bands**, mostly at the extremes: skip them.
+- **Schedule exhausted before N:** report the shortfall. Never widen the winning set to make up the number.
+- **Why bands, not a bigger `count`:** the IB scanner returns about 50 rows per query at most; a higher `count` doesn't get more.
+- **Trimmed names stay out** for the rest of the app session, so no later band re-rates them, also in a second sweep before InvMon
+  restarts.
+- **A price crossing a band edge** mid-run can put a name into two bands or none. Deduplication and the trim lock absorb it.
+- **Instrument count:** each band's losers are trimmed, so the portfolio holds about one batch plus the winners.
 
 ## Running this skill
 
-This skill talks to the InvMon MCP server on `localhost`, so your agent must
-run on the same computer as InvMon — a cloud or remote agent session can't reach
-it. It is a **one-shot sweep**: it iterates bands until `N` winners are found
-(or the schedule is exhausted), cleans up, and exits — it is not meant to be
-re-run on a schedule.
+A one-shot sweep: it runs bands until it has N winners or the schedule ends, cleans up and exits. Don't repeat it. The MCP server runs
+on `localhost`: your agent must run on the same computer as InvMon.

@@ -29,7 +29,7 @@ Make a new portfolio group *just for scanning*. In the Portfolios panel, add a n
 
 ![Add a Portfolio Group](assets/010-add-portfolio-group.png)
 
-- **Enable MCP Server** on port `55206` — this is the little local connection your AI assistant talks to. Keep the port matching the one in this repo's agent configs (see the [README](../../README.md#agent-set-up)).
+- **Enable MCP Server** — optional here. It's the local connection your AI assistant talks to, and starting the scan from InvMon (step 5) switches it on for you.
 - **Simulation** — optional. Since the scan only records ratings and never trades, you don't need it; turn it on if you'd simply rather keep the whole group sandboxed.
 
 
@@ -44,24 +44,15 @@ The weighting and target-position settings don't matter here — this is a scree
 
 ## 3. Portfolio settings
 
-Open the *portfolio's* **Settings…** dialog (right-click the portfolio in the Portfolios panel), enable editing, and adjust Default Chart Range (left). Setting this on the portfolio itself — rather than the whole group — keeps them local, which is handy if you're reusing an existing portfolio for the scan.
-
-### Instrument chart range
-
-![Instrument Chart Range](assets/030-instrument-chart-range.png)
-
-Set it to **5 days at 15-minute resolution**. This gives the AI recent intraday price bars to judge each stock on — during trading hours those quotes are only minutes old.
-
-Run the scan in the evening and it happily rates on the previous day's close instead; that's fine and expected. During trading hours it insists on a fresh quote and quietly skips anything that only comes back with stale end-of-day data.
-
-### MCP server options
+Open the *portfolio's* **Settings…** dialog (right-click the portfolio in the Portfolios panel), enable editing, and adjust its *MCP Server Options*. Setting them on the portfolio itself — rather than the whole group — keeps them local, which is handy if you're reusing an existing portfolio for the scan.
 
 ![MCP Server Options](assets/040-mcp-options.png)
 
+- **Agent Rating Horizon** *Short-Term* — the AI rates every stock for the coming days to weeks, on the portfolio's short-term chart range (5 days at 15-minute resolution, unless you've changed it). Run the scan in the evening and it rates on the previous day's close; during trading hours it insists on a fresh quote and skips anything that only comes back with stale end-of-day data. Leave it at *Long-Term* for a view over the next one to three months instead.
 - **List Limit 10** — this is our batch size, the "10 at a time" from the top. It caps the watchlist at 10 names, and it's the size the scanner trims back to between bands. IB tops out around 50 rows per scan anyway (that's the whole reason for sweeping band by band), so 10 sits comfortably under the ceiling — and a small batch keeps your TWS market-data lines free, since every visible watchlist name uses one.
 - **Trigger Scanner** — must be **off**. Left on, InvMon would re-run the scanner behind the AI's back and wipe out the batch it just built. The skill checks for this and refuses to run rather than quietly corrupt the sweep.
 - **Random List Order** — optional; shuffles each batch, which can take a little bias out of the ratings.
-- **Auto-Apply Ratings/Sentiment in Simulation Mode** — appears only if you turned *Simulation* on back in step 1, and should stay **off** (it is off by default). This is a screening pass: the ratings the AI submits are meant to sit on the watchlist for you to read. Leaving this off keeps them from being written through to the instruments' own ratings, which is what drives target weights and rebalancing.
+- **Auto-Apply Ratings/Sentiment in Simulation Mode** — stays **off** (it is off by default, and it only has an effect if you turned *Simulation* on back in step 1). This is a screening pass: the ratings the AI submits are meant to sit on the watchlist for you to read. Leaving this off keeps them from being written through to the instruments' own ratings, which is what drives target weights and rebalancing.
 
 
 ## 4. Configure the watchlist market scanner
@@ -86,28 +77,21 @@ Set it up as a **US decliners** screen:
 
 ## 5. Run the scan
 
-With TWS connected and InvMon running, open this repo in your AI assistant. This tutorial uses Claude Code; Codex CLI and Gemini CLI are set up too — see how to run a skill with them in the [README](../../README.md#agent-set-up).
+With TWS connected, right-click the scanner portfolio in the Portfolios panel and choose **AI Agent > market-scanner**. The *Run AI Agent* dialog opens with the skill and the portfolio set. It also tells you if the portfolio's account isn't an IB account or isn't connected.
+
+Left to itself the skill goes looking for **10** names rated `Strong Buy` or `Buy`, sweeping **\$5 to \$100 in \$5 bands**. Since we want the *downside* instead, say so in plain language in **Instructions**:
 
 ```
-cd InvMon.agent
-claude
-```
-
-Then start the skill:
-
-```
-/market-scanner
-```
-
-Left to itself the skill goes looking for **10** names rated `Strong Buy` or `Buy`, sweeping **\$5 to \$100 in \$5 bands**. Since we want the *downside* instead, just say so in plain language when you launch it:
-
-```
-/market-scanner find 5 names rated Sell or Strong Sell between $5 and $100, bands of $5
+find 5 names rated Sell or Strong Sell
 ```
 
 Everything is set this way — how many names, which ratings count, and the price range all come straight from what you type. We're keeping the default \$5–\$100 range in \$5 bands; with only 5 names to find, the sweep will almost always stop long before it works through all of them.
 
-It's a **one-shot** run: the AI sweeps band by band until it has your 5 names (or runs out of bands), cleans up, and stops. There's no need to loop it — and running a second sweep in the same InvMon session works from a shrinking universe (see the note at the very end), so restart InvMon before a fresh run.
+Pick your agent — Claude Code, Codex CLI, Gemini CLI or Goose, installed and signed in — leave *Repeat* off, and click **OK**. A terminal window opens and the scan starts. You don't need a copy of this repository: InvMon ships the skills and sets the agent up.
+
+It's a **one-shot** run: the AI sweeps band by band until it has your 5 names (or runs out of bands), cleans up, and stops. There's no need to repeat it — and running a second sweep in the same InvMon session works from a shrinking universe (see the note at the very end), so restart InvMon before a fresh run.
+
+**Starting the agent by hand.** You can also run the skill from a copy of this repository, as described in the [README](../../README.md#agent-set-up): start your agent in it and type, in Claude Code, `/market-scanner find 5 names rated Sell or Strong Sell`. The MCP server must then be on, at the port the agent's config expects, and with more than one portfolio in the group, name the portfolio too.
 
 
 ## 6. What you see while it runs
@@ -132,7 +116,7 @@ Most hiccups are a setup step that isn't quite right, and the scan usually tells
 | `Account is not connected; cannot run the scanner.` | TWS isn't running or isn't connected. | Start TWS and confirm the account connects. |
 | `The account's provider does not support market scanning.` | The portfolio isn't pointed at an IB account. | Point the group at your IB account. |
 | `A scanner run is already in progress for this portfolio.` | A scan (manual or from a previous call) is still running. | Wait for it to finish, then re-run. |
-| `Portfolio not found; specify portfolioId or portfolioName…` | The group holds more than one portfolio. | Name the portfolio when you start the skill, or keep the group to one. |
+| `Portfolio not found; specify portfolioId or portfolioName…` | The agent was started by hand, and the group holds more than one portfolio. | Start the scan from the portfolio's *AI Agent* submenu, or name the portfolio when you start the skill. |
 | `Scanner timed out after 60 seconds.` | IB didn't answer in time. | Usually a blip — check the TWS connection and re-run. |
 | `This tool call is currently limited to the watchlist pool.` | The set-aside tools only touch watchlist names. | Expected — the scan only ever touches the watchlist. If you see it, something aimed the tools elsewhere. |
 | Bands come back empty that shouldn't | Either a price filter got baked into the saved scan, or those names were cleared earlier this session. | Remove the base price filter (step 4). For the second cause, see below. |
