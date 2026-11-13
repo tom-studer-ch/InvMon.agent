@@ -13,6 +13,7 @@ metadata:
   invmon-requires: "ib-connection"
   invmon-reads: "rating-horizon"
   invmon-arguments: "How many names to find (default 10), which ratings count (default Strong Buy and Buy), price range and band width (default $5 to $100 in $5 bands)."
+  invmon-tutorial: "doc/market-scanner/market-scanner.md"
 ---
 
 # Scan a market for N names with a given rating

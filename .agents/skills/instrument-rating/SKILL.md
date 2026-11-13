@@ -11,6 +11,7 @@ metadata:
   invmon-loop-interval: "1h"
   invmon-reads: "rating-horizon"
   invmon-arguments: "A focus, e.g. the semiconductor names only, or one pool: positions, candidates or watchlist (default: positions and candidates)."
+  invmon-tutorial: "doc/instrument-rating/simulated-day-trading.md"
 ---
 
 # Rate instruments

@@ -103,6 +103,7 @@ InvMon builds its *AI Agent* menus and the run dialog from the `metadata` map in
 | `invmon-requires` | any of `simulation`, `ib-connection` | `simulation`: InvMon refuses to run the skill on a portfolio group that isn't in simulation mode. `ib-connection`: the dialog warns when the account isn't connected to Interactive Brokers. |
 | `invmon-arguments` | one sentence | Shows it under the dialog's *Instructions* field, as a hint at what the user can add. |
 | `invmon-reads` | `rating-horizon` | Shows the settings the skill works by under the *Skill* field: `rating-horizon` is the portfolio's Agent Rating Horizon and the chart range it follows. |
+| `invmon-tutorial` | a path in this repository, e.g. `doc/market-scanner/market-scanner.md` | Shows a *Set-up tutorial* link under the *Skill* field. It opens the file on GitHub at the tag of the user's InvMon version, which the release build tags this repository with. InvMon's build fails when the file doesn't exist. |
 
 For example, `instrument-rating`:
 
@@ -112,6 +113,7 @@ metadata:
   invmon-context: "portfolio-group portfolio instrument"
   invmon-loop-interval: "1h"
   invmon-reads: "rating-horizon"
+  invmon-tutorial: "doc/instrument-rating/simulated-day-trading.md"
 ```
 
 InvMon ignores keys and list values it doesn't know. It reads the metadata of the skills it ships, which come from this repository when InvMon is built: a skill added only to your own copy runs when you start the agent by hand, but doesn't appear in InvMon's menus.
