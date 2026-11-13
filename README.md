@@ -89,4 +89,29 @@ The tutorials start the agent from InvMon. To start it by hand instead, see [Age
 
 ## Adding a skill
 
-Create `.agents/skills/<name>/SKILL.md` (the folder name must match the skill's `name`), link it for Claude Code with `ln -s ../../.agents/skills/<name> .claude/skills/<name>`, and add it to the skill tables in this README and in `AGENTS.md`.
+Create `.agents/skills/<name>/SKILL.md` (the folder name must match the skill's `name`), link it for Claude Code with `ln -s ../../.agents/skills/<name> .claude/skills/<name>`, and add it to the skill tables in this README and in `AGENTS.md`. To offer it in InvMon's *AI Agent* menus, give it the metadata below.
+
+### InvMon metadata
+
+InvMon builds its *AI Agent* menus and the run dialog from the `metadata` map in each skill's frontmatter. The keys start with `invmon-`, every value is a string, and lists are space-separated. Agents don't act on these keys.
+
+| Key | Value | What InvMon does with it |
+|---|---|---|
+| `invmon-summary` | one sentence | Shows it under the dialog's *Skill* field. |
+| `invmon-context` | any of `portfolio-group`, `portfolio`, `instrument` | Offers the skill on a portfolio group, on a portfolio, or on instruments selected in a table. Without this key, InvMon doesn't offer the skill. |
+| `invmon-loop-interval` | an interval in `/loop` form, e.g. `15m`, `1h` | Marks a skill built to be repeated: the dialog suggests repeating it at this interval, for agents that can repeat a run. |
+| `invmon-requires` | any of `simulation`, `ib-connection` | `simulation`: InvMon refuses to run the skill on a portfolio group that isn't in simulation mode. `ib-connection`: the dialog warns when the account isn't connected to Interactive Brokers. |
+| `invmon-arguments` | one sentence | Shows it under the dialog's *Instructions* field, as a hint at what the user can add. |
+| `invmon-reads` | `rating-horizon` | Shows the settings the skill works by under the *Skill* field: `rating-horizon` is the portfolio's Agent Rating Horizon and the chart range it follows. |
+
+For example, `instrument-rating`:
+
+```yaml
+metadata:
+  invmon-summary: "Researches and rates instruments, for the portfolio's rating horizon: the selected ones, those of one portfolio, or of the whole group."
+  invmon-context: "portfolio-group portfolio instrument"
+  invmon-loop-interval: "1h"
+  invmon-reads: "rating-horizon"
+```
+
+InvMon ignores keys and list values it doesn't know. It reads the metadata of the skills it ships, which come from this repository when InvMon is built: a skill added only to your own copy runs when you start the agent by hand, but doesn't appear in InvMon's menus.

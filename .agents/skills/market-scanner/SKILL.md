@@ -39,8 +39,9 @@ The user sets these up once, in InvMon, on a dedicated portfolio. When `run_scan
 - **The MCP server enabled** on the portfolio group (*Enable MCP Server* in the group's *MCP Server Options*).
 - **Web search** enabled in your agent.
 - **An IB account, connected.** Other providers don't scan.
-- **The watchlist market scanner configured** in the portfolio's scanner settings: scan code (e.g. *Top % Gainers*), location (e.g.
-  `STK.US.MAJOR`) and base filters such as a minimum daily dollar volume. The sweep adds its price band per batch.
+- **The watchlist market scanner saved** on the portfolio (*Add from Market Scanner…* in its Watchlist panel): scan code (e.g.
+  *Top % Gainers*), location (e.g. `STK.US.MAJOR`) and base filters such as a minimum daily dollar volume. `run_scanner` refuses to
+  run without one. The sweep adds its price band per batch.
 - **Watchlist replace mode on:** each new band trims the previous band's visible names down to the pool's size; hidden winners stay.
 - **"Trigger Scanner" off.** `run_scanner` refuses to run otherwise.
 - **The watchlist scanner count about the batch size** (e.g. 40, less when TWS market-data lines are tight: each visible watchlist

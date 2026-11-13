@@ -113,6 +113,7 @@ Most hiccups are a setup step that isn't quite right, and the scan usually tells
 |---|---|---|
 | `run_scanner is not available.` | Your plan doesn't include the market scanner. | Upgrade to a paid plan. |
 | `run_scanner requires 'Trigger Scanner' to be OFF…` | That option is on and would clobber each batch. | Turn it off in *MCP Server Options* (step 3). |
+| `run_scanner requires a saved watchlist scanner for this portfolio…` | The portfolio has no watchlist scanner yet. | Set one up with *Add from Market Scanner…* and save it with *Don't run scanner – only save changes* (step 4). |
 | `Account is not connected; cannot run the scanner.` | TWS isn't running or isn't connected. | Start TWS and confirm the account connects. |
 | `The account's provider does not support market scanning.` | The portfolio isn't pointed at an IB account. | Point the group at your IB account. |
 | `A scanner run is already in progress for this portfolio.` | A scan (manual or from a previous call) is still running. | Wait for it to finish, then re-run. |
